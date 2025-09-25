@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: board-service
+  config:
+    import: classpath:mongodb.yaml
+  data:
+    mongodb:
+      uri: ${mongodb.uri}
+      password: ${mongodb.password}
+      username: ${mongodb.username}
+      database: ${mongodb.cluster-name}
+
+
