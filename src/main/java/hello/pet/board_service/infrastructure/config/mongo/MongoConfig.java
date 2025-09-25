@@ -50,10 +50,9 @@ public class MongoConfig {
 	}
 
 	/**
-	 * MongoDB에서 유효성 검사를 수행하기 위한 {@link ValidatingMongoEventListener}를 정의합니다.
-	 * 이 이벤트 리스너는 MongoDB에 데이터를 저장하거나 업데이트할 때 유효성 검사를 수행하는 역할을 합니다.
+	 * MongoDB 엔티티에 대해 저장 및 업데이트 시 Bean Validation을 수행하는 ValidatingMongoEventListener 빈을 생성한다.
 	 *
-	 * @return MongoDB 엔티티에 대한 유효성 검사를 처리하는 {@link ValidatingMongoEventListener}
+	 * @return MongoDB 엔티티의 제약 조건을 검증하는 {@link ValidatingMongoEventListener}
 	 */
 	@Bean
 	public ValidatingMongoEventListener validatingMongoEventListener() {

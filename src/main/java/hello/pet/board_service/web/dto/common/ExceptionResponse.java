@@ -62,6 +62,15 @@ public record ExceptionResponse(
 			.build();
 	}
 
+	/**
+	 * 주어진 HTTP 상태, 애플리케이션 에러 코드, 메시지 및 선택적 필드별 오류 매핑으로 ExceptionResponse 인스턴스를 생성한다.
+	 *
+	 * @param status  응답에 사용할 HTTP 상태
+	 * @param code    애플리케이션 수준의 에러 코드
+	 * @param message 사용자에게 표시할 에러 메시지
+	 * @param errors  필드별 상세 오류 매핑(선택적). `null`인 경우 직렬화 시 응답에 포함되지 않는다.
+	 * @return        전달된 값들을 반영한 ExceptionResponse 객체
+	 */
 	public static ExceptionResponse of(HttpStatus status, String code, String message, Map<String, String> errors) {
 		return ExceptionResponse.builder()
 			.status(status.value())

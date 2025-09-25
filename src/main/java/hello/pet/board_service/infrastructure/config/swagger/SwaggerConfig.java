@@ -56,13 +56,9 @@ public class SwaggerConfig {
 	}
 
 	/**
-	 * 컨트롤러 메서드 또는 그 인터페이스에 선언된 ApiErrorCodeExamples 애노테이션에 따라
-	 * OpenAPI Operation에 에러 코드 예시 응답을 주입하는 OperationCustomizer 빈을 반환합니다.
+	 * ApiErrorCodeExamples 애노테이션을 검사해 Operation에 에러 응답 예시를 추가하는 OperationCustomizer를 생성합니다.
 	 *
-	 * 상세:
-	 * - 반환되는 OperationCustomizer는 각 Operation에 대해 핸들러 메서드에서 ApiErrorCodeExamples를 찾고,
-	 *   존재하면 해당 예외 코드들을 기반으로 응답 예시를 생성하여 Operation에 추가합니다.
-	 * - 이 커스터마이저는 문서 생성 시점에 Operation 객체를 수정하여 각 HTTP 상태별 에러 예시를 확장합니다.
+	 * 컨트롤러 메서드와 해당 인터페이스에서 ApiErrorCodeExamples를 찾아, 애노테이션이 존재하면 해당 예외 코드들로부터 생성된 예시들을 Operation의 응답에 추가합니다.
 	 *
 	 * @return ApiErrorCodeExamples 애노테이션을 기반으로 Operation의 에러 응답 예시를 동적으로 추가하는 OperationCustomizer 빈
 	 */
@@ -79,13 +75,12 @@ public class SwaggerConfig {
 	}
 
 	/**
-	 * 핸들러 메서드에서 ApiErrorCodeExamples 애노테이션을 찾아 반환합니다.
+	 * 핸들러 메서드와 연관된 ApiErrorCodeExamples 애노테이션을 검색하여 반환합니다.
 	 *
-	 * 우선 컨트롤러 빈의 인터페이스 타입에 선언된 애노테이션을 확인하고,
-	 * 없으면 실제 핸들러 메서드에 선언된 애노테이션을 확인합니다.
+	 * 검색 순서는 메서드 → 클래스(빈 타입) → 구현된 인터페이스이며, 첫 발견된 애노테이션을 반환합니다.
 	 *
 	 * @param handlerMethod 애노테이션을 검색할 스프링 핸들러 메서드
-	 * @return 발견된 ApiErrorCodeExamples 인스턴스 또는 없으면 {@code null}
+	 * @return 발견된 ApiErrorCodeExamples 인스턴스, 없으면 {@code null}
 	 */
 	private ApiErrorCodeExamples findAnnotation(HandlerMethod handlerMethod) {
 		// 메서드 어노테이션을 먼저 찾고, 없으면 클래스 어노테이션을 찾음
@@ -104,6 +99,14 @@ public class SwaggerConfig {
 		return annotation.orElseGet(() -> findAnnotationInInterfaces(handlerMethod));
 	}
 
+	/**
+	 * 컨트롤러의 구현 클래스가 구현한 인터페이스들에서 ApiErrorCodeExamples 어노테이션을 찾아 반환한다.
+	 *
+	 * 각 인터페이스에 대해 인터페이스 자체의 어노테이션을 먼저 확인하고, 없으면 동일한 시그니처의 인터페이스 메서드에 어노테이션이 있는지 확인한다.
+	 *
+	 * @param handlerMethod 검색 대상인 컨트롤러 핸들러 메서드
+	 * @return 찾은 ApiErrorCodeExamples 어노테이션 객체, 없으면 {@code null}
+	 */
 	private ApiErrorCodeExamples findAnnotationInInterfaces(HandlerMethod handlerMethod) {
 		Class<?> beanType = handlerMethod.getBeanType();
 		return Arrays.stream(beanType.getInterfaces())
@@ -171,14 +174,12 @@ public class SwaggerConfig {
 	}
 
 	/**
-	 * 주어진 예외 코드 배열을 HTTP 상태 코드별로 그룹화하여 ExampleHolder 목록 맵으로 반환합니다.
+	 * 주어진 예외 코드 배열을 HTTP 상태 코드별로 그룹화한 맵을 생성합니다.
 	 *
-	 * 각 ExampleHolder는 해당 예외 코드로부터 생성된 Swagger Example(`getSwaggerExample`)과
-	 * 예외 코드 문자열(name), 그리고 예외 코드의 HTTP 상태값(code)을 포함합니다. 결과 맵의 키는
-	 * HTTP 상태 코드(int)이며 값은 해당 상태 코드에 매핑된 ExampleHolder 리스트입니다.
+	 * 각 값은 해당 예외 코드로부터 생성한 ExampleHolder 목록이며, 각 ExampleHolder는 Swagger Example, 예외 코드 이름, 그리고 해당 예외의 HTTP 상태 값을 포함합니다.
 	 *
 	 * @param codes 그룹화할 HelloPetExceptionCode 배열
-	 * @return HTTP 상태 코드별로 그룹화된 ExampleHolder 리스트의 맵
+	 * @return 키가 HTTP 상태 코드(int)이고 값이 해당 상태 코드에 매핑된 ExampleHolder 리스트인 맵
 	 */
 	private Map<Integer, List<ExampleHolder>> getGroupedExamples(HelloPetExceptionCode[] codes) {
 		return Arrays.stream(codes)
@@ -192,15 +193,13 @@ public class SwaggerConfig {
 	}
 
 	/**
-	 * 주어진 HelloPetExceptionCode로부터 Swagger Example 객체를 생성합니다.
+	 * HelloPetExceptionCode로부터 Swagger Example을 생성한다.
 	 *
-	 * <p>예제 값은 CommonResponse.fail(...) 형태의 실패 응답으로 구성되며,
-	 * 내부 값은 ExceptionResponse.of(status, code, message)입니다.
-	 * Example의 설명(description)은 먼저 code.getExplainError()를 호출하여 얻고,
-	 * 해당 호출이 NoSuchFieldException을 던지면 code.getMessage()로 대체합니다.
+	 * 생성되는 Example의 value는 ExceptionResponse.of(status, code, message)이며,
+	 * description은 먼저 code.getExplainError()의 결과를 사용하고 해당 호출이 NoSuchFieldException을 던지면 code.getMessage()로 대체한다.
 	 *
-	 * @param code 처리할 예외 코드 (예: 상태, 코드, 메시지를 포함)
-	 * @return Swagger용 Example 객체(값은 CommonResponse.fail(...)로 설정되고 description은 설명 문자열)
+	 * @param code 설명 및 상태 정보를 가진 예외 코드
+	 * @return ExceptionResponse를 value로 갖고 적절한 설명(description)이 설정된 Swagger Example
 	 */
 	private Example getSwaggerExample(HelloPetExceptionCode code) {
 		String explain = "";
