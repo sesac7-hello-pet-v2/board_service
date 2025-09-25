@@ -9,5 +9,5 @@ spring:
       password: ${mongodb.password}
       username: ${mongodb.username}
       database: ${mongodb.cluster-name}
-
-
+server:
+  port: 8083
