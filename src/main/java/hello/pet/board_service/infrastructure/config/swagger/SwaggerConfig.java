@@ -149,7 +149,6 @@ public class SwaggerConfig {
 	 * @return 검증 오류 예시를 담은 ExampleHolder(이름 "VALIDATION_ERROR", HTTP 상태 코드 400)
 	 */
 	private ExampleHolder getValidationErrorHolder() {
-		;
 		Example example = new Example();
 		example.setValue(
 			ExceptionResponse.of(
