@@ -6,8 +6,6 @@ spring:
   data:
     mongodb:
       uri: ${mongodb.uri}
-      password: ${mongodb.password}
-      username: ${mongodb.username}
-      database: ${mongodb.cluster-name}
+      auto-index-creation: true
 server:
   port: 8083
