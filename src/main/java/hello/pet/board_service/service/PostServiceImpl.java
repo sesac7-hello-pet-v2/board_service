@@ -14,6 +14,9 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public void save(PostCreateRequest request) {
+		/* TODO: API Gateway 구현이 완료가 되면 사용자의 ID를 통한 사용자의 정보를 담는 것도 좋을 것 같음.
+		현재는 테스트를 위한 코드임
+		 */
 		repository.save(
 			Post.builder()
 				.userId(request.userId())
