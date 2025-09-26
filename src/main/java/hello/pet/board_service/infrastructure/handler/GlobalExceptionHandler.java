@@ -35,14 +35,12 @@ public class GlobalExceptionHandler {
 	}
 
 	/**
-	 * 유효성 검사 실패(MethodArgumentNotValidException)를 처리하여 필드별 오류 메시지를 포함한
-	 * 표준화된 에러 응답을 HTTP 400으로 반환한다.
+	 * 유효성 검사 실패 시 필드별 오류 메시지를 포함한 표준화된 에러 응답을 반환한다.
 	 *
-	 * 반환되는 응답은 CommonResponse.fail(...) 형태이며 ExceptionResponse에는
-	 * status=HttpStatus.BAD_REQUEST, code="VALIDATION_ERROR", message="입력값이 유효하지 않습니다.",
-	 * 그리고 각 필드의 검증 오류 메시지를 담은 맵이 포함된다.
+	 * 반환되는 응답의 HTTP 상태는 400 Bad Request이며, 응답 본문에는 검증 오류 코드 "VALIDATION_ERROR",
+	 * 메시지 "입력값이 유효하지 않습니다.", 및 각 필드의 검증 오류 메시지를 담은 맵이 포함된다.
 	 *
-	 * @return HTTP 400 (Bad Request)와 필드별 검증 오류 정보를 담은 CommonResponse.fail 응답
+	 * @return HTTP 400 상태와 필드별 검증 오류 정보를 포함한 ExceptionResponse
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<?> tomatoExceptionHandler(MethodArgumentNotValidException e) {
