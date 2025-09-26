@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 	 * @return 응답 본문에 ExceptionResponse(예외의 상태, 코드, 메시지)를 담고 예외가 지정한 HTTP 상태를 설정한 ResponseEntity
 	 */
 	@ExceptionHandler(HelloPetException.class)
-	public ResponseEntity<?> handleCoTaskException(HelloPetException e) {
+	public ResponseEntity<?> helloPetExceptionHandle(HelloPetException e) {
 		log.error("CoTaskException occurred: {}", e.getMessage(), e);
 		return ResponseEntity.status(e.getStatus())
 			.body(
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
 	 * @return HTTP 400 (Bad Request)와 필드별 검증 오류 정보를 담은 CommonResponse.fail 응답
 	 */
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<?> tomatoExceptionHandler(MethodArgumentNotValidException e) {
+	public ResponseEntity<?> validationExceptionHandler(MethodArgumentNotValidException e) {
 		log.warn("Validation 실패: {}", e.getMessage());
 
 		Map<String, String> errors = new HashMap<>();
