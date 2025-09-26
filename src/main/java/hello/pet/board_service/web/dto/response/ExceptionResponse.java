@@ -1,4 +1,4 @@
-package hello.pet.board_service.web.dto.common;
+package hello.pet.board_service.web.dto.response;
 
 import java.util.Map;
 
