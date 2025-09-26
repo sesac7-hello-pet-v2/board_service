@@ -12,6 +12,11 @@ import lombok.RequiredArgsConstructor;
 public class PostServiceImpl implements PostService {
 	private final PostRepository repository;
 
+	/**
+	 * 요청 데이터를 사용해 새 게시글 엔티티를 생성하여 영속화한다.
+	 *
+	 * @param request 게시글 생성에 필요한 사용자 ID와 내용이 담긴 요청 객체
+	 */
 	@Override
 	public void save(PostCreateRequest request) {
 		repository.save(
