@@ -16,7 +16,7 @@ import org.springframework.web.method.HandlerMethod;
 
 import hello.pet.board_service.infrastructure.config.swagger.annotation.ApiErrorCodeExamples;
 import hello.pet.board_service.infrastructure.exception.HelloPetExceptionCode;
-import hello.pet.board_service.web.dto.common.ExceptionResponse;
+import hello.pet.board_service.web.dto.response.ExceptionResponse;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.examples.Example;
