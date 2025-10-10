@@ -58,7 +58,9 @@ public class PostServiceImpl implements PostService {
 	@Override
 	public Page<Post> findAllPost(PostPageRequest pageRequest) {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-		Pageable pageable = PageRequest.of(pageRequest.page(), pageRequest.size(), sort);
+		Pageable pageable = PageRequest.of(
+			pageRequest.getPageBase(), pageRequest.size(), sort
+		);
 		Page<Post> all = repository.findAll(pageable);
 		all.getContent().forEach(this::exchangeImageUrl);
 		return all;
