@@ -60,12 +60,24 @@ public class PostServiceImpl implements PostService {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		Pageable pageable = PageRequest.of(pageRequest.page(), pageRequest.size(), sort);
 		Page<Post> all = repository.findAll(pageable);
-		all.getContent().forEach(post -> {
-			post.getImages().forEach(image -> {
-				image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
-			});
-		});
+		all.getContent().forEach(this::exchangeImageUrl);
 		return all;
+	}
+
+	@Override
+	public Post findOne(String id) {
+		Post post = repository.findById(id)
+			.orElseThrow(
+				() -> new HelloPetException(HelloPetExceptionCode.NOT_FOUND_POST_BY_ID)
+			);
+		exchangeImageUrl(post);
+		return post;
+	}
+
+	private void exchangeImageUrl(Post post) {
+		post.getImages().forEach(image -> {
+			image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
+		});
 	}
 
 	private List<PostImage> uploadImage(Long userId, String postId, List<MultipartFile> images) {

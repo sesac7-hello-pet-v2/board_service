@@ -15,4 +15,6 @@ public interface PostService {
 void save(PostCreateRequest request);
 
 	Page<Post> findAllPost(PostPageRequest pageRequest);
+
+	Post findOne(String id);
 }
