@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.service.PostService;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostPageRequest;
+import hello.pet.board_service.web.dto.request.PostGetRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,8 +31,8 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@GetMapping
-	public ResponseEntity<?> getPosts(@ModelAttribute PostPageRequest pageRequest) {
-		Page<Post> allPost = service.findAllPost(pageRequest);
+	public ResponseEntity<?> getPosts(@ModelAttribute PostGetRequest request) {
+		Page<Post> allPost = service.findAllPost(request);
 		return ResponseEntity.ok(allPost);
 	}
 

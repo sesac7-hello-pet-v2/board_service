@@ -3,7 +3,7 @@ package hello.pet.board_service.web.controller;
 import org.springframework.http.ResponseEntity;
 
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostPageRequest;
+import hello.pet.board_service.web.dto.request.PostGetRequest;
 
 public interface PostController {
 	/**
@@ -14,7 +14,7 @@ public interface PostController {
  */
 ResponseEntity<?> createPost(PostCreateRequest request);
 
-	ResponseEntity<?> getPosts(PostPageRequest pageRequest);
+	ResponseEntity<?> getPosts(PostGetRequest request);
 
 	ResponseEntity<?> getPost(String id);
 }
