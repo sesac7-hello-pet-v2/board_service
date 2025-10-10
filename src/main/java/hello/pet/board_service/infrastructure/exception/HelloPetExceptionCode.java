@@ -18,6 +18,12 @@ public enum HelloPetExceptionCode {
 		"INTERNAL_SERVER_ERROR",
 		"An internal server error occurred."
 	),
+	@ExplainError("이미지 업로드 실패할 경우 발생하는 에러입니다.")
+	IMAGE_UPLOAD_FAIL(
+		HttpStatus.INTERNAL_SERVER_ERROR,
+		"IMAGE_UPLOAD_FAIL",
+		"이미지 업로드 실패"
+	)
 	;
 
 	private final HttpStatus status;
