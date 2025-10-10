@@ -4,7 +4,7 @@ import org.springframework.data.domain.Page;
 
 import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostPageRequest;
+import hello.pet.board_service.web.dto.request.PostGetRequest;
 
 public interface PostService {
 	/**
@@ -14,7 +14,7 @@ public interface PostService {
  */
 void save(PostCreateRequest request);
 
-	Page<Post> findAllPost(PostPageRequest pageRequest);
+	Page<Post> findAllPost(PostGetRequest request);
 
 	Post findOne(String id);
 }

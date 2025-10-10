@@ -23,7 +23,7 @@ import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResp
 import hello.pet.board_service.infrastructure.utils.Constants;
 import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostPageRequest;
+import hello.pet.board_service.web.dto.request.PostGetRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,12 +56,18 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Page<Post> findAllPost(PostPageRequest pageRequest) {
+	public Page<Post> findAllPost(PostGetRequest request) {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		Pageable pageable = PageRequest.of(
-			pageRequest.getPageBase(), pageRequest.size(), sort
+			request.getPageBase(), request.size(), sort
 		);
-		Page<Post> all = repository.findAll(pageable);
+
+		Page<Post> all;
+		if (request.userId() == null) {
+			all = repository.findAll(pageable);
+		} else {
+			all = repository.findByUserId(request.userId(), pageable);
+		}
 		all.getContent().forEach(this::exchangeImageUrl);
 		return all;
 	}
