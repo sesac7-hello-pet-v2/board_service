@@ -15,4 +15,6 @@ public interface PostController {
 ResponseEntity<?> createPost(PostCreateRequest request);
 
 	ResponseEntity<?> getPosts(PostPageRequest pageRequest);
+
+	ResponseEntity<?> getPost(String id);
 }

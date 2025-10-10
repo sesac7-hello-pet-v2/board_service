@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,5 +34,12 @@ public class PostControllerImpl implements PostController {
 	public ResponseEntity<?> getPosts(@ModelAttribute PostPageRequest pageRequest) {
 		Page<Post> allPost = service.findAllPost(pageRequest);
 		return ResponseEntity.ok(allPost);
+	}
+
+	@Override
+	@GetMapping("/{id}")
+	public ResponseEntity<?> getPost(@PathVariable String id) {
+		Post post = service.findOne(id);
+		return ResponseEntity.ok(post);
 	}
 }
