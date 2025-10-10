@@ -23,6 +23,12 @@ public enum HelloPetExceptionCode {
 		HttpStatus.INTERNAL_SERVER_ERROR,
 		"IMAGE_UPLOAD_FAIL",
 		"이미지 업로드 실패"
+	),
+	@ExplainError("ID를 통한 게시글의 조회에 실패 시 발생하는 에러입니다.")
+	NOT_FOUND_POST_BY_ID(
+		HttpStatus.NOT_FOUND,
+		"POST_NOT_POUND_BY_ID",
+		"해당 ID의 게시글을 조회할 수 없습니다."
 	)
 	;
 
