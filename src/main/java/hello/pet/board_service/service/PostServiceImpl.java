@@ -84,7 +84,9 @@ public class PostServiceImpl implements PostService {
 
 	private void exchangeImageUrl(Post post) {
 		post.getImages().forEach(image -> {
-			image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
+			if (image != null) {
+				image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
+			}
 		});
 	}
 

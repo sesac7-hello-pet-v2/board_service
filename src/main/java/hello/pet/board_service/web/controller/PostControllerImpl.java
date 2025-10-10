@@ -1,6 +1,7 @@
 package hello.pet.board_service.web.controller;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -26,19 +27,19 @@ public class PostControllerImpl implements PostController {
 	@PostMapping
 	public ResponseEntity<?> createPost(@Valid @ModelAttribute PostCreateRequest request) {
 		service.save(request);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 	@Override
 	@GetMapping
-	public ResponseEntity<?> getPosts(@ModelAttribute PostGetRequest request) {
+	public ResponseEntity<Page<Post>> getPosts(@Valid @ModelAttribute PostGetRequest request) {
 		Page<Post> allPost = service.findAllPost(request);
 		return ResponseEntity.ok(allPost);
 	}
 
 	@Override
 	@GetMapping("/{id}")
-	public ResponseEntity<?> getPost(@PathVariable String id) {
+	public ResponseEntity<Post> getPost(@PathVariable String id) {
 		Post post = service.findOne(id);
 		return ResponseEntity.ok(post);
 	}
