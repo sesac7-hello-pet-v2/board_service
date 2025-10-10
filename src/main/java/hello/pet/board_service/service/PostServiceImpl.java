@@ -5,6 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -16,8 +20,10 @@ import hello.pet.board_service.infrastructure.exception.HelloPetException;
 import hello.pet.board_service.infrastructure.exception.HelloPetExceptionCode;
 import hello.pet.board_service.infrastructure.feign.client.ImageServiceClient;
 import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResponse;
+import hello.pet.board_service.infrastructure.utils.Constants;
 import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
+import hello.pet.board_service.web.dto.request.PostPageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,9 +37,6 @@ public class PostServiceImpl implements PostService {
 	@Override
 	@Transactional
 	public void save(PostCreateRequest request) {
-		/* TODO: API Gateway 구현이 완료가 되면 사용자의 ID를 통한 사용자의 정보를 담는 것도 좋을 것 같음.
-		현재는 테스트를 위한 코드임
-		 */
 		Post post = repository.save(
 			Post.builder()
 				.userId(request.userId())
@@ -50,6 +53,19 @@ public class PostServiceImpl implements PostService {
 			post.setImages(postImages);
 			repository.save(post);
 		}
+	}
+
+	@Override
+	public Page<Post> findAllPost(PostPageRequest pageRequest) {
+		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+		Pageable pageable = PageRequest.of(pageRequest.page(), pageRequest.size(), sort);
+		Page<Post> all = repository.findAll(pageable);
+		all.getContent().forEach(post -> {
+			post.getImages().forEach(image -> {
+				image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
+			});
+		});
+		return all;
 	}
 
 	private List<PostImage> uploadImage(Long userId, String postId, List<MultipartFile> images) {
