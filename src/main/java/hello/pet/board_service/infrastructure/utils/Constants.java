@@ -1,6 +1,7 @@
 package hello.pet.board_service.infrastructure.utils;
 
 public class Constants {
+	public static final String S3_IMAGE_BUCKET_URL = "https://sesac-hello-pet-image-bucket.s3.ap-northeast-2.amazonaws.com/";
 
 	/**
  * 유틸리티 클래스의 인스턴스 생성을 방지한다.
