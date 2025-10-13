@@ -41,5 +41,5 @@ public interface PostController {
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우")
 	ResponseEntity<?> getPost(String id);
 
-	ResponseEntity<?> editPostContent(String id, PostEditRequest request);
+	ResponseEntity<?> editPost(String id, PostEditRequest request);
 }

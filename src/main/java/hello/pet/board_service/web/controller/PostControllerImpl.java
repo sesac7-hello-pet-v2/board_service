@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,8 +48,8 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@PutMapping("/{id}")
-	public ResponseEntity<String> editPostContent(@PathVariable String id,
-		@Valid @RequestBody PostEditRequest request) {
+	public ResponseEntity<String> editPost(@PathVariable String id,
+		@Valid @ModelAttribute PostEditRequest request) {
 		String editedId = service.editPostContentById(id, request);
 		return ResponseEntity.ok(editedId);
 	}
