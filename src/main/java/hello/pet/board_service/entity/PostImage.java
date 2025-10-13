@@ -11,6 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostImage {
+	@Setter
 	private Integer displayOrder;
 	@Setter
 	private String s3Key;

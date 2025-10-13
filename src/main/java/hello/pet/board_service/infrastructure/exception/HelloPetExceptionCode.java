@@ -29,6 +29,12 @@ public enum HelloPetExceptionCode {
 		HttpStatus.NOT_FOUND,
 		"POST_NOT_FOUND_BY_ID",
 		"해당 ID의 게시글을 조회할 수 없습니다."
+	),
+	@ExplainError("게시글에 1장의 사진은 필수일 때 해당 사진을 삭제하려는 경우 발생하는 에러입니다.")
+	IMAGE_REQUIRED(
+		HttpStatus.BAD_REQUEST,
+		"POST_IMAGE_ONE_REQUIRED",
+		"게시글에 1장의 사진은 필수 입니다."
 	)
 	;
 

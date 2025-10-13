@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 import hello.pet.board_service.infrastructure.config.swagger.annotation.ApiErrorCodeExamples;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
+import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,4 +40,6 @@ public interface PostController {
 	})
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우")
 	ResponseEntity<?> getPost(String id);
+
+	ResponseEntity<?> editPost(String id, PostEditRequest request);
 }
