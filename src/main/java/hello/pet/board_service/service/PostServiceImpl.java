@@ -1,12 +1,12 @@
 package hello.pet.board_service.service;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,8 +51,7 @@ public class PostServiceImpl implements PostService {
 
 		if (!CollectionUtils.isEmpty(request.file())) {
 			List<PostImage> postImages = uploadImage(
-				request.userId(),
-				post.getId(),
+				post,
 				request.file()
 			);
 			post.setImages(postImages);
@@ -88,17 +87,43 @@ public class PostServiceImpl implements PostService {
 	public String editPostContentById(String id, PostEditRequest request) {
 		Post post = findPostById(id);
 		post.setContent(request.content());
-		if (request.deleteImageOrders() != null && !request.deleteImageOrders().isEmpty()) {
-			Set<Integer> ordersToDelete = new HashSet<>(request.deleteImageOrders());
-			LocalDateTime now = LocalDateTime.now();
-			post.getImages().forEach(image -> {
-				if (ordersToDelete.contains(image.getDisplayOrder())) {
-					image.setDisplayOrder(-1);
-					image.setDeletedDate(now);
-				}
-			});
+		// 1. 삭제할 이미지 처리 및 S3 Key 수집
+		Set<Integer> ordersToDelete =
+			(request.deleteImageOrders() != null) ?
+				new HashSet<>(request.deleteImageOrders()) :
+				Collections.emptySet();
+		List<String> s3KeysToDelete = new LinkedList<>();
+
+		if (!ordersToDelete.isEmpty()) {
+			List<PostImage> currentImages = post.getImages();
+			// 삭제 대상을 걸러냅니다. (Java 8 filter 사용)
+			List<PostImage> retainedImages = currentImages.stream()
+				.filter(image -> {
+					if (ordersToDelete.contains(image.getDisplayOrder())) {
+						s3KeysToDelete.add(image.getS3Key()); // S3 삭제 목록에 추가
+						return false; // 리스트에서 제거 (삭제)
+					}
+					return true; // 리스트에 유지
+				})
+				.collect(Collectors.toCollection(LinkedList::new));
+
+			// 2. 남은 이미지로 리스트 교체 및 순서 재정렬
+			AtomicInteger order = new AtomicInteger(0);
+			retainedImages.forEach(image -> image.setDisplayOrder(order.getAndIncrement()));
+			post.setImages(retainedImages); // @OneToMany 관계에서 삭제가 일어나도록 유도
 		}
+
+		// 3. 추가하는 이미지 업로드 및 리스트에 추가
+		List<PostImage> newImages = uploadImage(post, request.file());
+		if (!CollectionUtils.isEmpty(newImages)) {
+			post.getImages().addAll(newImages); // 기존 리스트에 추가
+		}
+
+		// 4. DB 저장 (Dirty Checking으로 변경 사항 반영)
 		Post saved = repository.save(post);
+
+		// 5. S3 이미지 삭제 (비동기 처리 고려, 현재는 todo 주석 처리)
+		// deleteImagesFromS3(s3KeysToDelete);
 
 		return saved.getId();
 	}
@@ -118,22 +143,31 @@ public class PostServiceImpl implements PostService {
 		});
 	}
 
-	private List<PostImage> uploadImage(Long userId, String postId, List<MultipartFile> images) {
+	private List<PostImage> uploadImage(Post post, List<MultipartFile> images) {
 		if (CollectionUtils.isEmpty(images)) {
 			return Collections.emptyList();
 		}
 
-		List<PostImage> postImages = new LinkedList<>();
-		AtomicInteger order = new AtomicInteger(0);
+		// post.getImages()가 null이 아닌 경우를 가정하고 (Post 엔티티 초기화 시 Linked/ArrayList로 초기화 추천),
+		// 만약 null이라면 빈 리스트를 반환하거나 초기화합니다.
+		List<PostImage> postImages = post.getImages() != null ? post.getImages() : new LinkedList<>();
+
+		// 기존 이미지 개수(순서의 시작점)로 AtomicInteger 초기화
+		AtomicInteger order = new AtomicInteger(postImages.size());
+
+		List<PostImage> newlyUploadedImages = new LinkedList<>();
 
 		images.forEach(image -> {
-			String uploadImage = uploadImage(userId, postId, image);
-			postImages.add(PostImage.builder()
-				.s3Key(uploadImage)
+			String s3Key = uploadImage(post.getUserId(), post.getId(), image);
+			newlyUploadedImages.add(PostImage.builder()
+				.s3Key(s3Key)
+				// postImages.size()부터 순서 할당 시작
 				.displayOrder(order.getAndIncrement())
 				.build());
 		});
-		return postImages;
+
+		// 새로 업로드된 이미지 리스트만 반환하여 호출 측(save, edit)에서 기존 postImages에 추가하도록 유도
+		return newlyUploadedImages;
 	}
 
 	// S3 키 하나를 업로드하고 반환하는 메서드 (로직 분리)
