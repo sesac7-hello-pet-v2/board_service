@@ -43,6 +43,9 @@ dependencies {
     // Feign form encoder for multipart
     implementation 'io.github.openfeign.form:feign-form:3.8.0'
     implementation 'io.github.openfeign.form:feign-form-spring:3.8.0'
+
+    // Feign form encoder for Json
+    implementation 'io.github.openfeign:feign-jackson:13.6'
 }
 dependencyManagement {
     imports {

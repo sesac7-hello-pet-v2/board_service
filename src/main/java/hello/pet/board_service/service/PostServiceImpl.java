@@ -123,7 +123,7 @@ public class PostServiceImpl implements PostService {
 		Post saved = repository.save(post);
 
 		// 5. S3 이미지 삭제 (비동기 처리 고려, 현재는 todo 주석 처리)
-		// deleteImagesFromS3(s3KeysToDelete);
+		s3KeysToDelete.forEach(imageServiceClient::deleteImage);
 
 		return saved.getId();
 	}
