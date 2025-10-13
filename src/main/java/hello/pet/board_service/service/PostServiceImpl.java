@@ -84,19 +84,36 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
+	@Transactional
 	public String editPostContentById(String id, PostEditRequest request) {
 		Post post = findPostById(id);
 		post.setContent(request.content());
-		// 1. 삭제할 이미지 처리 및 S3 Key 수집
+
+		// 1. 삭제할 이미지 정보 수집
 		Set<Integer> ordersToDelete =
 			(request.deleteImageOrders() != null) ?
 				new HashSet<>(request.deleteImageOrders()) :
 				Collections.emptySet();
 		List<String> s3KeysToDelete = new LinkedList<>();
 
+		List<PostImage> currentImages = post.getImages();
+
+		// 2. 최종 이미지 개수 사전 검증
+		int currentImageCount = currentImages.size();
+		int imagesToDeleteCount = ordersToDelete.size();
+		int imagesToUploadCount = CollectionUtils.isEmpty(request.file()) ? 0 : request.file().size();
+
+		int finalImageCount = (currentImageCount - imagesToDeleteCount) + imagesToUploadCount;
+
+		// 게시글은 최소 1장의 사진을 필수로 요구합니다.
+		if (finalImageCount < 1) {
+			log.warn("게시글 수정 실패: 최소 이미지 개수(1장) 미달. Post ID: {}", id);
+			throw new HelloPetException(HelloPetExceptionCode.IMAGE_REQUIRED);
+		}
+
+		// 3. 삭제 대상 이미지 제거 및 S3 Key 수집
 		if (!ordersToDelete.isEmpty()) {
-			List<PostImage> currentImages = post.getImages();
-			// 삭제 대상을 걸러냅니다. (Java 8 filter 사용)
+			// 삭제 대상을 걸러내고, 삭제될 이미지의 S3 Key를 수집합니다.
 			List<PostImage> retainedImages = currentImages.stream()
 				.filter(image -> {
 					if (ordersToDelete.contains(image.getDisplayOrder())) {
@@ -107,23 +124,42 @@ public class PostServiceImpl implements PostService {
 				})
 				.collect(Collectors.toCollection(LinkedList::new));
 
-			// 2. 남은 이미지로 리스트 교체 및 순서 재정렬
+			// 4. 남은 이미지의 순서(DisplayOrder) 재정렬
 			AtomicInteger order = new AtomicInteger(0);
 			retainedImages.forEach(image -> image.setDisplayOrder(order.getAndIncrement()));
-			post.setImages(retainedImages); // @OneToMany 관계에서 삭제가 일어나도록 유도
+
+			// 엔티티의 이미지 리스트를 재설정하여 영속성 컨텍스트를 업데이트하고, 고아 객체 삭제를 유도
+			post.setImages(retainedImages);
 		}
 
-		// 3. 추가하는 이미지 업로드 및 리스트에 추가
-		List<PostImage> newImages = uploadImage(post, request.file());
-		if (!CollectionUtils.isEmpty(newImages)) {
-			post.getImages().addAll(newImages); // 기존 리스트에 추가
+		// 5. 추가하는 이미지 업로드 및 리스트에 추가
+		List<PostImage> newlyUploadedImages = uploadImage(post, request.file());
+		if (!CollectionUtils.isEmpty(newlyUploadedImages)) {
+			// 기존 리스트에 새 이미지를 추가합니다. (순서는 uploadImage 내부에서 이어서 할당됨)
+			// post.getImages()는 DB에서 불러온 이미지이거나 3번에서 retainedImages로 교체된 이미지입니다.
+			if (post.getImages() == null) {
+				post.setImages(new LinkedList<>());
+			}
+			post.getImages().addAll(newlyUploadedImages);
 		}
 
-		// 4. DB 저장 (Dirty Checking으로 변경 사항 반영)
+		// 6. DB 저장 (Dirty Checking으로 변경 사항 반영)
 		Post saved = repository.save(post);
 
-		// 5. S3 이미지 삭제 (비동기 처리 고려, 현재는 todo 주석 처리)
-		s3KeysToDelete.forEach(imageServiceClient::deleteImage);
+		// 7. S3 이미지 삭제 (비동기 처리 고려, 현재는 동기적으로 Feign 호출)
+		// 이미 DB 트랜잭션이 커밋되기 전에 삭제 요청이 먼저 실패하면 문제가 될 수 있으나,
+		// 현재는 간단한 구현을 위해 트랜잭션 내에서 동기적으로 처리합니다.
+		s3KeysToDelete.forEach(s3Key -> {
+			try {
+				imageServiceClient.deleteImage(s3Key);
+			} catch (feign.FeignException e) {
+				// S3 삭제 실패는 로그로 남기고 게시글 수정은 성공으로 간주 (데이터 불일치 발생 가능성 인지)
+				log.error("S3 이미지 삭제 Feign 통신 오류 (Status: {}): S3 Key: {}", e.status(), s3Key, e);
+				// 이 부분은 비즈니스 정책에 따라 예외를 던지거나 무시할 수 있습니다.
+			} catch (Exception e) {
+				log.error("S3 이미지 삭제 중 예상치 못한 오류 발생: S3 Key: {}", s3Key, e);
+			}
+		});
 
 		return saved.getId();
 	}
