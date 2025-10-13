@@ -1,14 +1,18 @@
 package hello.pet.board_service.service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -23,6 +27,7 @@ import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResp
 import hello.pet.board_service.infrastructure.utils.Constants;
 import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
+import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,12 +79,35 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	public Post findOne(String id) {
-		Post post = repository.findById(id)
+		Post post = findPostById(id);
+		exchangeImageUrl(post);
+		return post;
+	}
+
+	@Override
+	public String editPostContentById(String id, PostEditRequest request) {
+		Post post = findPostById(id);
+		post.setContent(request.content());
+		if (request.deleteImageOrders() != null && !request.deleteImageOrders().isEmpty()) {
+			Set<Integer> ordersToDelete = new HashSet<>(request.deleteImageOrders());
+			LocalDateTime now = LocalDateTime.now();
+			post.getImages().forEach(image -> {
+				if (ordersToDelete.contains(image.getDisplayOrder())) {
+					image.setDisplayOrder(-1);
+					image.setDeletedDate(now);
+				}
+			});
+		}
+		Post saved = repository.save(post);
+
+		return saved.getId();
+	}
+
+	private Post findPostById(String id) {
+		return repository.findById(id)
 			.orElseThrow(
 				() -> new HelloPetException(HelloPetExceptionCode.NOT_FOUND_POST_BY_ID)
 			);
-		exchangeImageUrl(post);
-		return post;
 	}
 
 	private void exchangeImageUrl(Post post) {
@@ -99,20 +127,40 @@ public class PostServiceImpl implements PostService {
 		AtomicInteger order = new AtomicInteger(0);
 
 		images.forEach(image -> {
-			try {
-				ImageUploadResponse body = imageServiceClient.uploadImage(userId, postId, image).getBody();
-
-				if (body != null) {
-					postImages.add(PostImage.builder()
-						.s3Key(body.s3Key())
-						.displayOrder(order.getAndIncrement())
-						.build());
-				}
-			} catch (Exception e) {
-				log.error("이미지 업로드 실패: {}", image.getOriginalFilename(), e);
-				throw new HelloPetException(HelloPetExceptionCode.IMAGE_UPLOAD_FAIL);
-			}
+			String uploadImage = uploadImage(userId, postId, image);
+			postImages.add(PostImage.builder()
+				.s3Key(uploadImage)
+				.displayOrder(order.getAndIncrement())
+				.build());
 		});
 		return postImages;
+	}
+
+	// S3 키 하나를 업로드하고 반환하는 메서드 (로직 분리)
+	private String uploadImage(Long userId, String postId, MultipartFile file) {
+		ImageUploadResponse body;
+
+		try {
+			// Feign 클라이언트 호출
+			ResponseEntity<ImageUploadResponse> response = imageServiceClient.uploadImage(userId, postId, file);
+			body = response.getBody(); // 응답 본문을 추출
+		} catch (feign.FeignException e) {
+			// 💡 Feign 통신 오류 (4xx, 5xx 응답 등) 명시적 처리
+			log.error("이미지 서비스 Feign 통신 오류 (Status: {}): {}", e.status(), file.getOriginalFilename(), e);
+			throw new HelloPetException(HelloPetExceptionCode.IMAGE_UPLOAD_FAIL);
+		} catch (Exception e) {
+			// 기타 연결/예상치 못한 오류 처리
+			log.error("이미지 업로드 중 예상치 못한 오류 발생: {}", file.getOriginalFilename(), e);
+			throw new HelloPetException(HelloPetExceptionCode.INTERNAL_SERVER_ERROR);
+		}
+
+		// 💡 응답 바디 및 S3 키 유효성 검사 강화
+		if (body == null || body.s3Key() == null || body.s3Key().trim().isEmpty()) {
+			log.error("이미지 업로드 응답에서 S3 키가 누락되었습니다. 파일명: {}", file.getOriginalFilename());
+			// body가 null일 때도 명확한 예외 처리
+			throw new HelloPetException(HelloPetExceptionCode.IMAGE_UPLOAD_FAIL);
+		}
+
+		return body.s3Key();
 	}
 }
