@@ -149,19 +149,24 @@ public class PostServiceImpl implements PostService {
 		// 7. S3 이미지 삭제 (비동기 처리 고려, 현재는 동기적으로 Feign 호출)
 		// 이미 DB 트랜잭션이 커밋되기 전에 삭제 요청이 먼저 실패하면 문제가 될 수 있으나,
 		// 현재는 간단한 구현을 위해 트랜잭션 내에서 동기적으로 처리합니다.
-		s3KeysToDelete.forEach(s3Key -> {
-			try {
-				imageServiceClient.deleteImage(s3Key);
-			} catch (feign.FeignException e) {
-				// S3 삭제 실패는 로그로 남기고 게시글 수정은 성공으로 간주 (데이터 불일치 발생 가능성 인지)
-				log.error("S3 이미지 삭제 Feign 통신 오류 (Status: {}): S3 Key: {}", e.status(), s3Key, e);
-				// 이 부분은 비즈니스 정책에 따라 예외를 던지거나 무시할 수 있습니다.
-			} catch (Exception e) {
-				log.error("S3 이미지 삭제 중 예상치 못한 오류 발생: S3 Key: {}", s3Key, e);
-			}
-		});
+		s3KeysToDelete.forEach(this::deleteImage);
 
 		return saved.getId();
+	}
+
+	/**
+	 * 게시글을 삭제합니다.
+	 * 이미지 삭제가 실패하더라도 게시글 삭제는 완료됩니다.
+	 * (이미지 삭제 실패는 로그로 기록되며, S3에 고아 객체가 남을 수 있습니다)
+	 *
+	 * @param id 삭제할 게시글 ID
+	 */
+	@Override
+	@Transactional
+	public void deletePostById(String id) {
+		Post post = findPostById(id);
+		post.getImages().forEach(image -> deleteImage(image.getS3Key()));
+		repository.delete(post);
 	}
 
 	private Post findPostById(String id) {
@@ -232,5 +237,17 @@ public class PostServiceImpl implements PostService {
 		}
 
 		return body.s3Key();
+	}
+
+	private void deleteImage(String s3Key) {
+		try {
+			imageServiceClient.deleteImage(s3Key);
+		} catch (feign.FeignException e) {
+			// S3 삭제 실패는 로그로 남기고 게시글 수정은 성공으로 간주 (데이터 불일치 발생 가능성 인지)
+			log.error("S3 이미지 삭제 Feign 통신 오류 (Status: {}): S3 Key: {}", e.status(), s3Key, e);
+			// 이 부분은 비즈니스 정책에 따라 예외를 던지거나 무시할 수 있습니다.
+		} catch (Exception e) {
+			log.error("S3 이미지 삭제 중 예상치 못한 오류 발생: S3 Key: {}", s3Key, e);
+		}
 	}
 }

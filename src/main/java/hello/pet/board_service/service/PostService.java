@@ -20,4 +20,6 @@ void save(PostCreateRequest request);
 	Post findOne(String id);
 
 	String editPostContentById(String id, PostEditRequest request);
+
+	void deletePostById(String id);
 }

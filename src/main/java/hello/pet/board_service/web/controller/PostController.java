@@ -42,4 +42,6 @@ public interface PostController {
 	ResponseEntity<?> getPost(String id);
 
 	ResponseEntity<?> editPost(String id, PostEditRequest request);
+
+	ResponseEntity<?> deletePost(String id);
 }
