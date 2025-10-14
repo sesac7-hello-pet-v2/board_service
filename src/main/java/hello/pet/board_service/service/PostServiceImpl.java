@@ -154,10 +154,14 @@ public class PostServiceImpl implements PostService {
 		return saved.getId();
 	}
 
+	/**
+	 * 게시글을 삭제합니다.
+	 * 이미지 삭제가 실패하더라도 게시글 삭제는 완료됩니다.
+	 * (이미지 삭제 실패는 로그로 기록되며, S3에 고아 객체가 남을 수 있습니다)
+	 *
+	 * @param id 삭제할 게시글 ID
+	 */
 	@Override
-	// 이미지 삭제 중 실패 시
-	// 게시글 삭제는 완료되도록 트랜잭션 범위를 게시글 삭제로만 제한
-	// (이미지 삭제 실패는 로그로 남기고 무시)
 	@Transactional
 	public void deletePostById(String id) {
 		Post post = findPostById(id);
