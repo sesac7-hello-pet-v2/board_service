@@ -3,6 +3,7 @@ package hello.pet.board_service.web.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,5 +53,12 @@ public class PostControllerImpl implements PostController {
 		@Valid @ModelAttribute PostEditRequest request) {
 		String editedId = service.editPostContentById(id, request);
 		return ResponseEntity.ok(editedId);
+	}
+
+	@Override
+	@DeleteMapping("/{id}")
+	public ResponseEntity<?> deletePost(@PathVariable String id) {
+		service.deletePostById(id);
+		return ResponseEntity.ok().build();
 	}
 }
