@@ -3,6 +3,8 @@ package hello.pet.board_service.web.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.entity.PostImage;
 
@@ -21,6 +23,10 @@ public record PostResponse(
 			mapToImageUrls(post),
 			post.getCreatedAt()
 		);
+	}
+
+	public static Page<PostResponse> from(Page<Post> posts) {
+		return posts.map(PostResponse::from);
 	}
 
 	private static List<String> mapToImageUrls(Post post) {
