@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.service.PostService;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.response.PostResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -35,15 +35,15 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@GetMapping
-	public ResponseEntity<Page<Post>> getPosts(@Valid @ModelAttribute PostGetRequest request) {
-		Page<Post> allPost = service.findAllPost(request);
+	public ResponseEntity<Page<PostResponse>> getPosts(@Valid @ModelAttribute PostGetRequest request) {
+		Page<PostResponse> allPost = service.findAllPost(request);
 		return ResponseEntity.ok(allPost);
 	}
 
 	@Override
 	@GetMapping("/{id}")
-	public ResponseEntity<Post> getPost(@PathVariable String id) {
-		Post post = service.findOne(id);
+	public ResponseEntity<PostResponse> getPost(@PathVariable String id) {
+		PostResponse post = service.findOne(id);
 		return ResponseEntity.ok(post);
 	}
 

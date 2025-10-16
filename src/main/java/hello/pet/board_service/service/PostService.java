@@ -2,10 +2,10 @@ package hello.pet.board_service.service;
 
 import org.springframework.data.domain.Page;
 
-import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.response.PostResponse;
 
 public interface PostService {
 	/**
@@ -15,9 +15,9 @@ public interface PostService {
  */
 void save(PostCreateRequest request);
 
-	Page<Post> findAllPost(PostGetRequest request);
+	Page<PostResponse> findAllPost(PostGetRequest request);
 
-	Post findOne(String id);
+	PostResponse findOne(String id);
 
 	String editPostContentById(String id, PostEditRequest request);
 

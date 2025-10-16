@@ -29,6 +29,7 @@ import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,7 +61,7 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Page<Post> findAllPost(PostGetRequest request) {
+	public Page<PostResponse> findAllPost(PostGetRequest request) {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		Pageable pageable = PageRequest.of(
 			request.getPageBase(), request.size(), sort
@@ -73,14 +74,14 @@ public class PostServiceImpl implements PostService {
 			all = repository.findByUserId(request.userId(), pageable);
 		}
 		all.getContent().forEach(this::exchangeImageUrl);
-		return all;
+		return PostResponse.from(all);
 	}
 
 	@Override
-	public Post findOne(String id) {
+	public PostResponse findOne(String id) {
 		Post post = findPostById(id);
 		exchangeImageUrl(post);
-		return post;
+		return PostResponse.from(post);
 	}
 
 	@Override
