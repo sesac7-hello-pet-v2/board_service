@@ -180,16 +180,14 @@ public class PostServiceImpl implements PostService {
 
 		boolean isLiked;
 		if (post.getLikedUserIds().contains(userId)) {
-			post.getLikedUserIds().remove(userId);
-			post.setLikeCount(post.getLikeCount() - 1);
+			repository.removeLike(id, userId);
 			isLiked = false;
 		} else {
-			post.getLikedUserIds().add(userId);
-			post.setLikeCount(post.getLikeCount() + 1);
+			repository.addLike(id, userId);
 			isLiked = true;
 		}
 
-		repository.save(post);
+		post = findPostById(id);
 
 		return PostLikeResponse.builder()
 			.postId(id)
