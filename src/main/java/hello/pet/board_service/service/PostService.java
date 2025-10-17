@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
+import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
 
 public interface PostService {
@@ -22,4 +24,6 @@ void save(PostCreateRequest request);
 	String editPostContentById(String id, PostEditRequest request);
 
 	void deletePostById(String id);
+
+	PostLikeResponse likePost(String id, PostLikeRequest request);
 }

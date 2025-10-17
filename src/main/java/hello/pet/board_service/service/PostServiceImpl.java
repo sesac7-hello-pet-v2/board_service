@@ -29,6 +29,8 @@ import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
+import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -168,6 +170,32 @@ public class PostServiceImpl implements PostService {
 		Post post = findPostById(id);
 		post.getImages().forEach(image -> deleteImage(image.getS3Key()));
 		repository.delete(post);
+	}
+
+	@Override
+	@Transactional
+	public PostLikeResponse likePost(String id, PostLikeRequest request) {
+		Post post = findPostById(id);
+		Long userId = request.getUserId();
+
+		boolean isLiked;
+		if (post.getLikedUserIds().contains(userId)) {
+			post.getLikedUserIds().remove(userId);
+			post.setLikeCount(post.getLikeCount() - 1);
+			isLiked = false;
+		} else {
+			post.getLikedUserIds().add(userId);
+			post.setLikeCount(post.getLikeCount() + 1);
+			isLiked = true;
+		}
+
+		repository.save(post);
+
+		return PostLikeResponse.builder()
+			.postId(id)
+			.isLiked(isLiked)
+			.likeCount(post.getLikeCount())
+			.build();
 	}
 
 	private Post findPostById(String id) {
