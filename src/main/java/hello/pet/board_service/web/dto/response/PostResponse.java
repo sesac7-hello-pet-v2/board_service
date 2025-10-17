@@ -13,7 +13,8 @@ public record PostResponse(
 	Long userId,
 	String content,
 	List<String> imageUrls,
-	LocalDateTime postedAt
+	LocalDateTime postedAt,
+	int likeCount
 ) {
 	public static PostResponse from(Post post) {
 		return new PostResponse(
@@ -21,7 +22,8 @@ public record PostResponse(
 			post.getUserId(),
 			post.getContent(),
 			mapToImageUrls(post),
-			post.getCreatedAt()
+			post.getCreatedAt(),
+			post.getLikeCount()
 		);
 	}
 
