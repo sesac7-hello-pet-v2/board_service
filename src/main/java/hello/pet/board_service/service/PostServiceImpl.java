@@ -176,7 +176,7 @@ public class PostServiceImpl implements PostService {
 	@Transactional
 	public PostLikeResponse likePost(String id, PostLikeRequest request) {
 		Post post = findPostById(id);
-		Long userId = request.getUserId();
+		Long userId = request.userId();
 
 		boolean isLiked;
 		if (post.getLikedUserIds().contains(userId)) {
