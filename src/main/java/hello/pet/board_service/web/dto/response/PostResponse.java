@@ -30,7 +30,10 @@ public record PostResponse(
 	}
 
 	public static PostResponse from(Post post, Long currentUserId) {
-		boolean isLiked = currentUserId != null && post.getLikedUserIds().contains(currentUserId);
+		boolean isLiked = false;
+		if (currentUserId != null) {
+			isLiked = post.getLikedUserIds() != null && post.getLikedUserIds().contains(currentUserId);
+		}
 		return new PostResponse(
 			post.getId(),
 			post.getUserId(),
