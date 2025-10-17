@@ -29,6 +29,9 @@ import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
+import hello.pet.board_service.web.dto.response.PostLikeResponse;
+import hello.pet.board_service.web.dto.response.PostResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,27 +63,36 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Page<Post> findAllPost(PostGetRequest request) {
+	public Page<PostResponse> findAllPost(PostGetRequest request, Long currentUserId) {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		Pageable pageable = PageRequest.of(
 			request.getPageBase(), request.size(), sort
 		);
 
 		Page<Post> all;
-		if (request.userId() == null) {
-			all = repository.findAll(pageable);
-		} else {
+		if (request.userId() != null) {
+			// 특정 사용자의 게시글 조회
 			all = repository.findByUserId(request.userId(), pageable);
+		} else {
+			// 전체 게시글 조회
+			all = repository.findAll(pageable);
 		}
 		all.getContent().forEach(this::exchangeImageUrl);
-		return all;
+		return PostResponse.from(all, currentUserId);
 	}
 
 	@Override
-	public Post findOne(String id) {
+	public PostResponse findOne(String id) {
 		Post post = findPostById(id);
 		exchangeImageUrl(post);
-		return post;
+		return PostResponse.from(post);
+	}
+
+	@Override
+	public PostResponse findOne(String id, Long currentUserId) {
+		Post post = findPostById(id);
+		exchangeImageUrl(post);
+		return PostResponse.from(post, currentUserId);
 	}
 
 	@Override
@@ -167,6 +179,33 @@ public class PostServiceImpl implements PostService {
 		Post post = findPostById(id);
 		post.getImages().forEach(image -> deleteImage(image.getS3Key()));
 		repository.delete(post);
+	}
+
+	@Override
+	@Transactional
+	public PostLikeResponse likePost(String id, PostLikeRequest request) {
+		Long userId = request.userId();
+
+		// 먼저 좋아요 추가 시도
+		long addResult = repository.addLike(id, userId);
+		boolean isLiked;
+
+		if (addResult > 0) {
+			// 추가 성공
+			isLiked = true;
+		} else {
+			// 이미 좋아요가 존재하므로 제거
+			repository.removeLike(id, userId);
+			isLiked = false;
+		}
+
+		Post post = findPostById(id);
+
+		return PostLikeResponse.builder()
+			.postId(id)
+			.isLiked(isLiked)
+			.likeCount(post.getLikeCount())
+			.build();
 	}
 
 	private Post findPostById(String id) {
