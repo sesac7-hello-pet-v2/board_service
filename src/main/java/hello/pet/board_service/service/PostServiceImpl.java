@@ -76,7 +76,7 @@ public class PostServiceImpl implements PostService {
 			all = repository.findByUserId(request.userId(), pageable);
 		}
 		all.getContent().forEach(this::exchangeImageUrl);
-		return PostResponse.from(all);
+		return PostResponse.from(all, request.currentUserId());
 	}
 
 	@Override
@@ -84,6 +84,13 @@ public class PostServiceImpl implements PostService {
 		Post post = findPostById(id);
 		exchangeImageUrl(post);
 		return PostResponse.from(post);
+	}
+
+	@Override
+	public PostResponse findOne(String id, Long currentUserId) {
+		Post post = findPostById(id);
+		exchangeImageUrl(post);
+		return PostResponse.from(post, currentUserId);
 	}
 
 	@Override
@@ -175,19 +182,22 @@ public class PostServiceImpl implements PostService {
 	@Override
 	@Transactional
 	public PostLikeResponse likePost(String id, PostLikeRequest request) {
-		Post post = findPostById(id);
 		Long userId = request.userId();
 
+		// 먼저 좋아요 추가 시도
+		long addResult = repository.addLike(id, userId);
 		boolean isLiked;
-		if (post.getLikedUserIds().contains(userId)) {
+
+		if (addResult > 0) {
+			// 추가 성공
+			isLiked = true;
+		} else {
+			// 이미 좋아요가 존재하므로 제거
 			repository.removeLike(id, userId);
 			isLiked = false;
-		} else {
-			repository.addLike(id, userId);
-			isLiked = true;
 		}
 
-		post = findPostById(id);
+		Post post = findPostById(id);
 
 		return PostLikeResponse.builder()
 			.postId(id)
