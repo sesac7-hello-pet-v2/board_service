@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/hello-pet-v2-test
+  cloud:
+    openfeign:
+      image-service: http://localhost:8088
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 5000
+            logger-level: basic
