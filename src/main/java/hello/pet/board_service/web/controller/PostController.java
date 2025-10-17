@@ -8,6 +8,7 @@ import hello.pet.board_service.infrastructure.config.swagger.annotation.ApiError
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
@@ -44,4 +45,14 @@ public interface PostController {
 	ResponseEntity<?> editPost(String id, PostEditRequest request);
 
 	ResponseEntity<?> deletePost(String id);
+
+	@Operation(
+		summary = "게시글 좋아요",
+		description = "게시글에 좋아요를 추가하거나 제거합니다. 이미 좋아요를 누른 상태에서 다시 누르면 좋아요가 해제됩니다."
+	)
+	@ApiErrorCodeExamples({
+		NOT_FOUND_POST_BY_ID
+	})
+	@ApiResponse(responseCode = "200", description = "좋아요 상태 변경 성공")
+	ResponseEntity<?> likePost(String id, PostLikeRequest request);
 }

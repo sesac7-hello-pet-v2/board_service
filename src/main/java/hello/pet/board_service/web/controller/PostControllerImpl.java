@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +17,8 @@ import hello.pet.board_service.service.PostService;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
+import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -60,5 +63,13 @@ public class PostControllerImpl implements PostController {
 	public ResponseEntity<?> deletePost(@PathVariable String id) {
 		service.deletePostById(id);
 		return ResponseEntity.ok().build();
+	}
+
+	@Override
+	@PostMapping("/{id}/like")
+	public ResponseEntity<PostLikeResponse> likePost(@PathVariable String id,
+		@Valid @RequestBody PostLikeRequest request) {
+		PostLikeResponse response = service.likePost(id, request);
+		return ResponseEntity.ok(response);
 	}
 }
