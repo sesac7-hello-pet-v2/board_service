@@ -2,7 +2,6 @@ spring:
   application:
     name: board-service
   profiles:
-    active:
-      - dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
 server:
   port: 8083
