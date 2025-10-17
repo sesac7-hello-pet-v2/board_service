@@ -63,20 +63,22 @@ public class PostServiceImpl implements PostService {
 	}
 
 	@Override
-	public Page<PostResponse> findAllPost(PostGetRequest request) {
+	public Page<PostResponse> findAllPost(PostGetRequest request, Long currentUserId) {
 		Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
 		Pageable pageable = PageRequest.of(
 			request.getPageBase(), request.size(), sort
 		);
 
 		Page<Post> all;
-		if (request.userId() == null) {
-			all = repository.findAll(pageable);
-		} else {
+		if (request.userId() != null) {
+			// 특정 사용자의 게시글 조회
 			all = repository.findByUserId(request.userId(), pageable);
+		} else {
+			// 전체 게시글 조회
+			all = repository.findAll(pageable);
 		}
 		all.getContent().forEach(this::exchangeImageUrl);
-		return PostResponse.from(all, request.currentUserId());
+		return PostResponse.from(all, currentUserId);
 	}
 
 	@Override

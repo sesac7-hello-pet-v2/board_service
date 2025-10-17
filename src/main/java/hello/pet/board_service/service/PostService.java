@@ -17,9 +17,11 @@ public interface PostService {
  */
 void save(PostCreateRequest request);
 
-	Page<PostResponse> findAllPost(PostGetRequest request);
+	Page<PostResponse> findAllPost(PostGetRequest request, Long currentUserId);
 
 	PostResponse findOne(String id);
+
+	PostResponse findOne(String id, Long currentUserId);
 
 	String editPostContentById(String id, PostEditRequest request);
 

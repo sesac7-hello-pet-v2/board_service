@@ -14,7 +14,8 @@ public record PostResponse(
 	String content,
 	List<String> imageUrls,
 	LocalDateTime postedAt,
-	int likeCount
+	int likeCount,
+	boolean isLiked
 ) {
 	public static PostResponse from(Post post) {
 		return new PostResponse(
@@ -23,12 +24,30 @@ public record PostResponse(
 			post.getContent(),
 			mapToImageUrls(post),
 			post.getCreatedAt(),
-			post.getLikeCount()
+			post.getLikeCount(),
+			false // 기본값, 실제 조회 시 현재 사용자 기준으로 설정
+		);
+	}
+
+	public static PostResponse from(Post post, Long currentUserId) {
+		boolean isLiked = currentUserId != null && post.getLikedUserIds().contains(currentUserId);
+		return new PostResponse(
+			post.getId(),
+			post.getUserId(),
+			post.getContent(),
+			mapToImageUrls(post),
+			post.getCreatedAt(),
+			post.getLikeCount(),
+			isLiked
 		);
 	}
 
 	public static Page<PostResponse> from(Page<Post> posts) {
 		return posts.map(PostResponse::from);
+	}
+
+	public static Page<PostResponse> from(Page<Post> posts, Long currentUserId) {
+		return posts.map(post -> PostResponse.from(post, currentUserId));
 	}
 
 	private static List<String> mapToImageUrls(Post post) {

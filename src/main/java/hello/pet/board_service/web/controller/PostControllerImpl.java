@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,15 +39,22 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@GetMapping
-	public ResponseEntity<Page<PostResponse>> getPosts(@Valid @ModelAttribute PostGetRequest request) {
-		Page<PostResponse> allPost = service.findAllPost(request);
+	public ResponseEntity<Page<PostResponse>> getPosts(@Valid @ModelAttribute PostGetRequest request,
+		@RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+		Page<PostResponse> allPost = service.findAllPost(request, currentUserId);
 		return ResponseEntity.ok(allPost);
 	}
 
 	@Override
 	@GetMapping("/{id}")
-	public ResponseEntity<PostResponse> getPost(@PathVariable String id) {
-		PostResponse post = service.findOne(id);
+	public ResponseEntity<PostResponse> getPost(@PathVariable String id,
+		@RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+		PostResponse post;
+		if (currentUserId != null) {
+			post = service.findOne(id, currentUserId);
+		} else {
+			post = service.findOne(id);
+		}
 		return ResponseEntity.ok(post);
 	}
 

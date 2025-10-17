@@ -30,17 +30,17 @@ public interface PostController {
 		description = "해당 기능을 통해 전체 조회 및 특정 사용자의 게시글을 조회할 수 있습니다."
 	)
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우.")
-	ResponseEntity<?> getPosts(PostGetRequest request);
+	ResponseEntity<?> getPosts(PostGetRequest request, Long currentUserId);
 
 	@Operation(
 		summary = "ID를 통한 게시글 조회",
-		description = "게시글의 ID를 통해 게시글의 상세 정보를 조회할 수 있습니다."
+		description = "게시글의 ID를 통해 게시글의 상세 정보를 조회할 수 있습니다. 현재 사용자의 좋아요 여부도 함께 제공됩니다."
 	)
 	@ApiErrorCodeExamples({
 		NOT_FOUND_POST_BY_ID
 	})
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우")
-	ResponseEntity<?> getPost(String id);
+	ResponseEntity<?> getPost(String id, Long currentUserId);
 
 	ResponseEntity<?> editPost(String id, PostEditRequest request);
 
