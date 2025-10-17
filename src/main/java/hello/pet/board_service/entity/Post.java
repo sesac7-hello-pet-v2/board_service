@@ -1,7 +1,9 @@
 package hello.pet.board_service.entity;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -46,4 +48,11 @@ public class Post {
 
 	@LastModifiedDate
 	private LocalDateTime updatedAt;
+
+	@Builder.Default
+	private Set<Long> likedUserIds = new HashSet<>();
+
+	@Builder.Default
+	@Setter
+	private int likeCount = 0;
 }

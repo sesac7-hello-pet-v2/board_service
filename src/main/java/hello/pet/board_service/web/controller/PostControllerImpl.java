@@ -9,14 +9,18 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import hello.pet.board_service.entity.Post;
 import hello.pet.board_service.service.PostService;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
+import hello.pet.board_service.web.dto.request.PostLikeRequest;
+import hello.pet.board_service.web.dto.response.PostLikeResponse;
+import hello.pet.board_service.web.dto.response.PostResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -35,15 +39,22 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@GetMapping
-	public ResponseEntity<Page<Post>> getPosts(@Valid @ModelAttribute PostGetRequest request) {
-		Page<Post> allPost = service.findAllPost(request);
+	public ResponseEntity<Page<PostResponse>> getPosts(@Valid @ModelAttribute PostGetRequest request,
+		@RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+		Page<PostResponse> allPost = service.findAllPost(request, currentUserId);
 		return ResponseEntity.ok(allPost);
 	}
 
 	@Override
 	@GetMapping("/{id}")
-	public ResponseEntity<Post> getPost(@PathVariable String id) {
-		Post post = service.findOne(id);
+	public ResponseEntity<PostResponse> getPost(@PathVariable String id,
+		@RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+		PostResponse post;
+		if (currentUserId != null) {
+			post = service.findOne(id, currentUserId);
+		} else {
+			post = service.findOne(id);
+		}
 		return ResponseEntity.ok(post);
 	}
 
@@ -60,5 +71,13 @@ public class PostControllerImpl implements PostController {
 	public ResponseEntity<?> deletePost(@PathVariable String id) {
 		service.deletePostById(id);
 		return ResponseEntity.ok().build();
+	}
+
+	@Override
+	@PostMapping("/{id}/like")
+	public ResponseEntity<PostLikeResponse> likePost(@PathVariable String id,
+		@Valid @RequestBody PostLikeRequest request) {
+		PostLikeResponse response = service.likePost(id, request);
+		return ResponseEntity.ok(response);
 	}
 }
