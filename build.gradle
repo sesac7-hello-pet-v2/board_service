@@ -46,6 +46,11 @@ dependencies {
 
     // Feign form encoder for Json
     implementation 'io.github.openfeign:feign-jackson:13.6'
+
+    // Observablity
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 dependencyManagement {
     imports {
