@@ -35,6 +35,12 @@ public enum HelloPetExceptionCode {
 		HttpStatus.BAD_REQUEST,
 		"POST_IMAGE_ONE_REQUIRED",
 		"게시글에 1장의 사진은 필수 입니다."
+	),
+	@ExplainError("게시글에 대한 권한이 없을 때 발생하는 에러입니다.")
+	FORBIDDEN(
+		HttpStatus.FORBIDDEN,
+		"ACCESS_FORBIDDEN",
+		"해당 작업에 대한 권한이 없습니다."
 	)
 	;
 

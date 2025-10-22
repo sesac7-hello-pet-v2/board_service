@@ -18,7 +18,6 @@ import hello.pet.board_service.service.PostService;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
-import hello.pet.board_service.web.dto.request.PostLikeRequest;
 import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
 import jakarta.validation.Valid;
@@ -32,8 +31,10 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@PostMapping
-	public ResponseEntity<?> createPost(@Valid @ModelAttribute PostCreateRequest request) {
-		service.save(request);
+	public ResponseEntity<?> createPost(
+		@Valid @RequestBody PostCreateRequest request,
+		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
+		service.save(request, userId);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
@@ -49,6 +50,7 @@ public class PostControllerImpl implements PostController {
 	@GetMapping("/{id}")
 	public ResponseEntity<PostResponse> getPost(@PathVariable String id,
 		@RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+
 		PostResponse post;
 		if (currentUserId != null) {
 			post = service.findOne(id, currentUserId);
@@ -61,23 +63,25 @@ public class PostControllerImpl implements PostController {
 	@Override
 	@PutMapping("/{id}")
 	public ResponseEntity<String> editPost(@PathVariable String id,
-		@Valid @ModelAttribute PostEditRequest request) {
-		String editedId = service.editPostContentById(id, request);
+		@Valid @ModelAttribute PostEditRequest request,
+		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
+		String editedId = service.editPostContentById(id, request, userId);
 		return ResponseEntity.ok(editedId);
 	}
 
 	@Override
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deletePost(@PathVariable String id) {
-		service.deletePostById(id);
+	public ResponseEntity<?> deletePost(@PathVariable String id,
+		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
+		service.deletePostById(id, userId);
 		return ResponseEntity.ok().build();
 	}
 
 	@Override
 	@PostMapping("/{id}/like")
 	public ResponseEntity<PostLikeResponse> likePost(@PathVariable String id,
-		@Valid @RequestBody PostLikeRequest request) {
-		PostLikeResponse response = service.likePost(id, request);
+		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
+		PostLikeResponse response = service.likePost(id, userId);
 		return ResponseEntity.ok(response);
 	}
 }

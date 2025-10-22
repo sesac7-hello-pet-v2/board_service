@@ -29,7 +29,6 @@ import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
-import hello.pet.board_service.web.dto.request.PostLikeRequest;
 import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
 import lombok.RequiredArgsConstructor;
@@ -44,19 +43,16 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	@Transactional
-	public void save(PostCreateRequest request) {
+	public void save(PostCreateRequest request, Long userId) {
 		Post post = repository.save(
 			Post.builder()
-				.userId(request.userId())
+				.userId(userId)
 				.content(request.content())
 				.build()
 		);
 
-		if (!CollectionUtils.isEmpty(request.file())) {
-			List<PostImage> postImages = uploadImage(
-				post,
-				request.file()
-			);
+		if (!CollectionUtils.isEmpty(request.imageUrls())) {
+			List<PostImage> postImages = createPostImages(post, request.imageUrls());
 			post.setImages(postImages);
 			repository.save(post);
 		}
@@ -97,8 +93,13 @@ public class PostServiceImpl implements PostService {
 
 	@Override
 	@Transactional
-	public String editPostContentById(String id, PostEditRequest request) {
+	public String editPostContentById(String id, PostEditRequest request, Long userId) {
 		Post post = findPostById(id);
+
+		// 권한 검증: 게시글 작성자만 수정 가능
+		if (!post.getUserId().equals(userId)) {
+			throw new HelloPetException(HelloPetExceptionCode.FORBIDDEN);
+		}
 		post.setContent(request.content());
 
 		// 1. 삭제할 이미지 정보 수집
@@ -175,16 +176,20 @@ public class PostServiceImpl implements PostService {
 	 */
 	@Override
 	@Transactional
-	public void deletePostById(String id) {
+	public void deletePostById(String id, Long userId) {
 		Post post = findPostById(id);
+
+		// 권한 검증: 게시글 작성자만 삭제 가능
+		if (!post.getUserId().equals(userId)) {
+			throw new HelloPetException(HelloPetExceptionCode.FORBIDDEN);
+		}
 		post.getImages().forEach(image -> deleteImage(image.getS3Key()));
 		repository.delete(post);
 	}
 
 	@Override
 	@Transactional
-	public PostLikeResponse likePost(String id, PostLikeRequest request) {
-		Long userId = request.userId();
+	public PostLikeResponse likePost(String id, Long userId) {
 
 		// 먼저 좋아요 추가 시도
 		long addResult = repository.addLike(id, userId);
@@ -221,6 +226,44 @@ public class PostServiceImpl implements PostService {
 				image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
 			}
 		});
+	}
+
+	private List<PostImage> createPostImages(Post post, List<String> imageUrls) {
+		if (CollectionUtils.isEmpty(imageUrls)) {
+			return Collections.emptyList();
+		}
+
+		// post.getImages()가 null이 아닌 경우를 가정하고 (Post 엔티티 초기화 시 Linked/ArrayList로 초기화 추천),
+		// 만약 null이라면 빈 리스트를 반환하거나 초기화합니다.
+		List<PostImage> postImages = post.getImages() != null ? post.getImages() : new LinkedList<>();
+
+		// 기존 이미지 개수(순서의 시작점)로 AtomicInteger 초기화
+		AtomicInteger order = new AtomicInteger(postImages.size());
+
+		List<PostImage> newPostImages = new LinkedList<>();
+
+		imageUrls.forEach(imageUrl -> {
+			// URL에서 S3 키 추출 (https://bucket.s3.region.amazonaws.com/key 형태에서 key 부분만)
+			String s3Key = extractS3KeyFromUrl(imageUrl);
+			newPostImages.add(PostImage.builder()
+				.s3Key(s3Key)
+				// postImages.size()부터 순서 할당 시작
+				.displayOrder(order.getAndIncrement())
+				.build());
+		});
+
+		// 새로 생성된 이미지 리스트만 반환하여 호출 측(save)에서 기존 postImages에 추가하도록 유도
+		return newPostImages;
+	}
+
+	private String extractS3KeyFromUrl(String imageUrl) {
+		try {
+			// URL에서 S3 키 추출
+			return imageUrl.substring(imageUrl.indexOf(".com/") + 5);
+		} catch (Exception e) {
+			log.warn("Failed to extract S3 key from URL: {}", imageUrl, e);
+			return imageUrl; // 실패 시 원본 URL 반환
+		}
 	}
 
 	private List<PostImage> uploadImage(Post post, List<MultipartFile> images) {

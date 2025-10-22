@@ -8,7 +8,6 @@ import hello.pet.board_service.infrastructure.config.swagger.annotation.ApiError
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
-import hello.pet.board_service.web.dto.request.PostLikeRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
@@ -16,14 +15,15 @@ public interface PostController {
 	/**
 	 * 새 게시물 생성을 처리한다.
 	 *
-	 * @param request 게시물 생성에 필요한 데이터(예: 제목, 내용, 작성자 등)를 담은 요청 DTO
+	 * @param request 게시물 생성에 필요한 데이터(내용, 이미지 URL 등)를 담은 요청 DTO
+	 * @param userId API Gateway에서 제공하는 사용자 ID (X-User-Id 헤더)
 	 * @return 생성 결과를 담은 HTTP 응답 엔티티 — 성공 시 생성된 게시물 정보 또는 적절한 상태 코드를 포함한다
 	 */
 	@Operation(
 		summary = "게시글 생성"
 	)
 	@ApiResponse(responseCode = "201", description = "게시글 생성이 성공적으로 완료가 될 경우 201 코드를 반환하게 됩니다.")
-	ResponseEntity<?> createPost(PostCreateRequest request);
+	ResponseEntity<?> createPost(PostCreateRequest request, Long userId);
 
 	@Operation(
 		summary = "게시글 조회",
@@ -42,9 +42,9 @@ public interface PostController {
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우")
 	ResponseEntity<?> getPost(String id, Long currentUserId);
 
-	ResponseEntity<?> editPost(String id, PostEditRequest request);
+	ResponseEntity<?> editPost(String id, PostEditRequest request, Long userId);
 
-	ResponseEntity<?> deletePost(String id);
+	ResponseEntity<?> deletePost(String id, Long userId);
 
 	@Operation(
 		summary = "게시글 좋아요",
@@ -54,5 +54,5 @@ public interface PostController {
 		NOT_FOUND_POST_BY_ID
 	})
 	@ApiResponse(responseCode = "200", description = "좋아요 상태 변경 성공")
-	ResponseEntity<?> likePost(String id, PostLikeRequest request);
+	ResponseEntity<?> likePost(String id, Long userId);
 }
