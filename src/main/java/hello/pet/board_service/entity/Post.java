@@ -1,6 +1,7 @@
 package hello.pet.board_service.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,8 @@ public class Post {
 	private String content;
 
 	@Setter
-	private List<PostImage> images;
+	@Builder.Default
+	private List<PostImage> images = new ArrayList<>();
 
 	@CreatedDate
 	private LocalDateTime createdAt;

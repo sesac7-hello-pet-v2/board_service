@@ -3,5 +3,9 @@ spring:
     name: board-service
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
 server:
   port: 8083

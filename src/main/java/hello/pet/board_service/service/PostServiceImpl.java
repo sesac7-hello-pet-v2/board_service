@@ -43,6 +43,10 @@ public class PostServiceImpl implements PostService {
 	@Override
 	@Transactional
 	public void save(PostCreateRequest request, Long userId) {
+		log.info("게시글 생성 시작 - userId: {}, content length: {}, images count: {}",
+			userId, request.content().length(),
+			request.images() != null ? request.images().size() : 0);
+
 		Post post = repository.save(
 			Post.builder()
 				.userId(userId)
@@ -50,10 +54,27 @@ public class PostServiceImpl implements PostService {
 				.build()
 		);
 
-		if (!CollectionUtils.isEmpty(request.images())) {
-			List<PostImage> postImages = uploadImage(post, request.images());
-			post.setImages(postImages);
-			repository.save(post);
+		log.info("게시글 저장 완료 - postId: {}", post.getId());
+
+		if (request.images() != null && !request.images().isEmpty()) {
+			// 빈 파일 필터링
+			List<MultipartFile> validImages = request.images().stream()
+				.filter(file -> file != null && !file.isEmpty())
+				.toList();
+
+			if (!validImages.isEmpty()) {
+				log.info("이미지 업로드 시작 - 전체 이미지: {}, 유효한 이미지: {}",
+					request.images().size(), validImages.size());
+				List<PostImage> postImages = uploadImage(post, validImages);
+				log.info("이미지 업로드 완료 - 업로드된 이미지 개수: {}", postImages.size());
+				post.setImages(postImages);
+				repository.save(post);
+				log.info("이미지 정보가 포함된 게시글 저장 완료");
+			} else {
+				log.info("유효한 이미지가 없습니다. (빈 파일들만 있음)");
+			}
+		} else {
+			log.info("업로드할 이미지가 없습니다.");
 		}
 	}
 
@@ -284,12 +305,17 @@ public class PostServiceImpl implements PostService {
 
 	// S3 키 하나를 업로드하고 반환하는 메서드 (로직 분리)
 	private String uploadImage(Long userId, String postId, MultipartFile file) {
+		log.info("이미지 업로드 시작 - userId: {}, postId: {}, fileName: {}, fileSize: {}",
+			userId, postId, file.getOriginalFilename(), file.getSize());
+
 		ImageUploadResponse body;
 
 		try {
 			// Feign 클라이언트 호출
 			ResponseEntity<ImageUploadResponse> response = imageServiceClient.uploadImage(userId, postId, file);
 			body = response.getBody(); // 응답 본문을 추출
+			log.info("이미지 업로드 Feign 호출 성공 - fileName: {}, response status: {}",
+				file.getOriginalFilename(), response.getStatusCode());
 		} catch (feign.FeignException e) {
 			// 💡 Feign 통신 오류 (4xx, 5xx 응답 등) 명시적 처리
 			log.error("이미지 서비스 Feign 통신 오류 (Status: {}): {}", e.status(), file.getOriginalFilename(), e);
@@ -307,6 +333,7 @@ public class PostServiceImpl implements PostService {
 			throw new HelloPetException(HelloPetExceptionCode.IMAGE_UPLOAD_FAIL);
 		}
 
+		log.info("이미지 업로드 성공 - fileName: {}, s3Key: {}", file.getOriginalFilename(), body.s3Key());
 		return body.s3Key();
 	}
 
