@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,9 +29,9 @@ public class PostControllerImpl implements PostController {
 	private final PostService service;
 
 	@Override
-	@PostMapping
+	@PostMapping(consumes = {"multipart/form-data"})
 	public ResponseEntity<?> createPost(
-		@Valid @RequestBody PostCreateRequest request,
+		@Valid @ModelAttribute PostCreateRequest request,
 		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
 		service.save(request, userId);
 		return ResponseEntity.status(HttpStatus.CREATED).build();

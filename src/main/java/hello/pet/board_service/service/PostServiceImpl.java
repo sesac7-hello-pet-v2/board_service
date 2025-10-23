@@ -51,8 +51,8 @@ public class PostServiceImpl implements PostService {
 				.build()
 		);
 
-		if (!CollectionUtils.isEmpty(request.imageUrls())) {
-			List<PostImage> postImages = createPostImages(post, request.imageUrls());
+		if (!CollectionUtils.isEmpty(request.images())) {
+			List<PostImage> postImages = uploadImage(post, request.images());
 			post.setImages(postImages);
 			repository.save(post);
 		}
