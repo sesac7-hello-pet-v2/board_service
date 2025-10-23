@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 import hello.pet.board_service.entity.Post;
-import hello.pet.board_service.entity.PostImage;
 
 public record PostResponse(
 	String postId,
@@ -60,7 +59,7 @@ public record PostResponse(
 
 		return post.getImages().stream()
 			.filter(image -> image != null && image.getS3Key() != null)
-			.map(PostImage::getS3Key)
+			.map(image -> hello.pet.board_service.infrastructure.utils.Constants.S3_IMAGE_BUCKET_URL + image.getS3Key())
 			.toList();
 	}
 }

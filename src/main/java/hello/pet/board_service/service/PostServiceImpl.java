@@ -24,7 +24,6 @@ import hello.pet.board_service.infrastructure.exception.HelloPetException;
 import hello.pet.board_service.infrastructure.exception.HelloPetExceptionCode;
 import hello.pet.board_service.infrastructure.feign.client.ImageServiceClient;
 import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResponse;
-import hello.pet.board_service.infrastructure.utils.Constants;
 import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
@@ -73,21 +72,18 @@ public class PostServiceImpl implements PostService {
 			// 전체 게시글 조회
 			all = repository.findAll(pageable);
 		}
-		all.getContent().forEach(this::exchangeImageUrl);
 		return PostResponse.from(all, currentUserId);
 	}
 
 	@Override
 	public PostResponse findOne(String id) {
 		Post post = findPostById(id);
-		exchangeImageUrl(post);
 		return PostResponse.from(post);
 	}
 
 	@Override
 	public PostResponse findOne(String id, Long currentUserId) {
 		Post post = findPostById(id);
-		exchangeImageUrl(post);
 		return PostResponse.from(post, currentUserId);
 	}
 
@@ -220,13 +216,6 @@ public class PostServiceImpl implements PostService {
 			);
 	}
 
-	private void exchangeImageUrl(Post post) {
-		post.getImages().forEach(image -> {
-			if (image != null) {
-				image.setS3Key(Constants.S3_IMAGE_BUCKET_URL + image.getS3Key());
-			}
-		});
-	}
 
 	private List<PostImage> createPostImages(Post post, List<String> imageUrls) {
 		if (CollectionUtils.isEmpty(imageUrls)) {
