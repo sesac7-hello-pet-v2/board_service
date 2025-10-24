@@ -1,7 +1,12 @@
 package hello.pet.board_service.infrastructure.config.mongo;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -27,7 +32,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
  * @author namung08
  */
 @Configuration
-@EnableMongoAuditing
+@EnableMongoAuditing(dateTimeProviderRef = "koreanDateTimeProvider")
 public class MongoConfig {
 
 	/**
@@ -68,5 +73,18 @@ public class MongoConfig {
 	@Bean
 	public LocalValidatorFactoryBean validator() {
 		return new LocalValidatorFactoryBean();
+	}
+
+	/**
+	 * 한국 시간대(KST)를 기준으로 현재 시간을 제공하는 DateTimeProvider 빈을 정의합니다.
+	 * MongoDB의 @CreatedDate와 @LastModifiedDate에서 사용됩니다.
+	 *
+	 * @return 한국 시간대 기준의 {@link DateTimeProvider}
+	 */
+	@Bean
+	public DateTimeProvider koreanDateTimeProvider() {
+		return () -> Optional.of(
+			ZonedDateTime.now(ZoneId.of("Asia/Seoul")).toLocalDateTime()
+		);
 	}
 }
