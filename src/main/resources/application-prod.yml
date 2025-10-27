@@ -8,6 +8,7 @@ spring:
   cloud:
     openfeign:
       image-service: ${IMAGE_SERVICE_URL}
+      user-service: ${USER_SERVICE_URL}
       client:
         config:
           default:
