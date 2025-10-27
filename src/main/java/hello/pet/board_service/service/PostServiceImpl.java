@@ -85,6 +85,8 @@ public class PostServiceImpl implements PostService {
 			request.getPageBase(), request.size(), sort
 		);
 
+		log.info("로그인을 한 상태입니다. {}", currentUserId);
+
 		Page<Post> all;
 		if (request.userId() != null) {
 			// 특정 사용자의 게시글 조회
