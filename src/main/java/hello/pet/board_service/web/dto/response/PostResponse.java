@@ -6,10 +6,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 
 import hello.pet.board_service.entity.Post;
+import hello.pet.board_service.infrastructure.feign.dto.response.UserDetailResponse;
 
 public record PostResponse(
 	String postId,
-	Long userId,
+	PostUserResponse user,
 	String content,
 	List<String> imageUrls,
 	LocalDateTime postedAt,
@@ -19,7 +20,7 @@ public record PostResponse(
 	public static PostResponse from(Post post) {
 		return new PostResponse(
 			post.getId(),
-			post.getUserId(),
+			PostUserResponse.from(post.getUserId(), null),
 			post.getContent(),
 			mapToImageUrls(post),
 			post.getCreatedAt(),
@@ -35,7 +36,7 @@ public record PostResponse(
 		}
 		return new PostResponse(
 			post.getId(),
-			post.getUserId(),
+			PostUserResponse.from(post.getUserId(), null),
 			post.getContent(),
 			mapToImageUrls(post),
 			post.getCreatedAt(),
@@ -50,6 +51,23 @@ public record PostResponse(
 
 	public static Page<PostResponse> from(Page<Post> posts, Long currentUserId) {
 		return posts.map(post -> PostResponse.from(post, currentUserId));
+	}
+
+	// 사용자 정보를 포함한 PostResponse 생성
+	public static PostResponse from(Post post, Long currentUserId, UserDetailResponse userDetail) {
+		boolean isLiked = false;
+		if (currentUserId != null) {
+			isLiked = post.getLikedUserIds() != null && post.getLikedUserIds().contains(currentUserId);
+		}
+		return new PostResponse(
+			post.getId(),
+			PostUserResponse.from(post.getUserId(), userDetail),
+			post.getContent(),
+			mapToImageUrls(post),
+			post.getCreatedAt(),
+			post.getLikeCount(),
+			isLiked
+		);
 	}
 
 	private static List<String> mapToImageUrls(Post post) {
