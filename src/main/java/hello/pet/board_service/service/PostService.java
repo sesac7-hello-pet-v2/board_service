@@ -2,8 +2,8 @@ package hello.pet.board_service.service;
 
 import org.springframework.data.domain.Page;
 
+import hello.pet.board_service.web.dto.request.PostContentUpdateRequest;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
@@ -23,7 +23,7 @@ public interface PostService {
 
 	PostResponse findOne(String id, Long currentUserId);
 
-	String editPostContentById(String id, PostEditRequest request, Long userId);
+	String updatePostContent(String id, PostContentUpdateRequest request, Long userId);
 
 	void deletePostById(String id, Long userId);
 

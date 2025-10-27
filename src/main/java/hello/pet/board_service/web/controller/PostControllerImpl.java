@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import hello.pet.board_service.service.PostService;
+import hello.pet.board_service.web.dto.request.PostContentUpdateRequest;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
@@ -61,10 +62,10 @@ public class PostControllerImpl implements PostController {
 
 	@Override
 	@PutMapping("/{id}")
-	public ResponseEntity<String> editPost(@PathVariable String id,
-		@Valid @ModelAttribute PostEditRequest request,
+	public ResponseEntity<String> updatePostContent(@PathVariable String id,
+		@Valid @RequestBody PostContentUpdateRequest request,
 		@RequestHeader(value = "X-User-Id", required = true) Long userId) {
-		String editedId = service.editPostContentById(id, request, userId);
+		String editedId = service.updatePostContent(id, request, userId);
 		return ResponseEntity.ok(editedId);
 	}
 

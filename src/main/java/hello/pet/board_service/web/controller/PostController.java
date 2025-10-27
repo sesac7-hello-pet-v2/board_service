@@ -5,8 +5,8 @@ import static hello.pet.board_service.infrastructure.exception.HelloPetException
 import org.springframework.http.ResponseEntity;
 
 import hello.pet.board_service.infrastructure.config.swagger.annotation.ApiErrorCodeExamples;
+import hello.pet.board_service.web.dto.request.PostContentUpdateRequest;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,7 +42,12 @@ public interface PostController {
 	@ApiResponse(responseCode = "200", description = "게시글의 조회에 성공할 경우")
 	ResponseEntity<?> getPost(String id, Long currentUserId);
 
-	ResponseEntity<?> editPost(String id, PostEditRequest request, Long userId);
+	@Operation(
+		summary = "게시글 내용 수정",
+		description = "게시글의 내용만 수정합니다. 이미지는 수정할 수 없습니다."
+	)
+	@ApiResponse(responseCode = "200", description = "게시글 내용 수정 성공")
+	ResponseEntity<?> updatePostContent(String id, PostContentUpdateRequest request, Long userId);
 
 	ResponseEntity<?> deletePost(String id, Long userId);
 

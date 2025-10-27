@@ -1,12 +1,9 @@
 package hello.pet.board_service.service;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,8 +24,8 @@ import hello.pet.board_service.infrastructure.feign.client.UserServiceClient;
 import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResponse;
 import hello.pet.board_service.infrastructure.feign.dto.response.UserDetailResponse;
 import hello.pet.board_service.repository.PostRepository;
+import hello.pet.board_service.web.dto.request.PostContentUpdateRequest;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
-import hello.pet.board_service.web.dto.request.PostEditRequest;
 import hello.pet.board_service.web.dto.request.PostGetRequest;
 import hello.pet.board_service.web.dto.response.PostLikeResponse;
 import hello.pet.board_service.web.dto.response.PostResponse;
@@ -120,78 +117,20 @@ public class PostServiceImpl implements PostService {
 		return PostResponse.from(post, currentUserId, userDetail);
 	}
 
+
 	@Override
 	@Transactional
-	public String editPostContentById(String id, PostEditRequest request, Long userId) {
+	public String updatePostContent(String id, PostContentUpdateRequest request, Long userId) {
 		Post post = findPostById(id);
 
 		// 권한 검증: 게시글 작성자만 수정 가능
 		if (!post.getUserId().equals(userId)) {
 			throw new HelloPetException(HelloPetExceptionCode.FORBIDDEN);
 		}
+
+		// 내용만 업데이트 (이미지는 수정하지 않음)
 		post.setContent(request.content());
-
-		// 1. 삭제할 이미지 정보 수집
-		Set<Integer> ordersToDelete =
-			(request.deleteImageOrders() != null) ?
-				new HashSet<>(request.deleteImageOrders()) :
-				Collections.emptySet();
-		List<String> s3KeysToDelete = new LinkedList<>();
-
-		List<PostImage> currentImages = post.getImages();
-
-		// 2. 최종 이미지 개수 사전 검증
-		int currentImageCount = currentImages.size();
-		int imagesToDeleteCount = ordersToDelete.size();
-		int imagesToUploadCount = CollectionUtils.isEmpty(request.file()) ? 0 : request.file().size();
-
-		int finalImageCount = (currentImageCount - imagesToDeleteCount) + imagesToUploadCount;
-
-		// 게시글은 최소 1장의 사진을 필수로 요구합니다.
-		if (finalImageCount < 1) {
-			log.warn("게시글 수정 실패: 최소 이미지 개수(1장) 미달. Post ID: {}", id);
-			throw new HelloPetException(HelloPetExceptionCode.IMAGE_REQUIRED);
-		}
-
-		// 3. 삭제 대상 이미지 제거 및 S3 Key 수집
-		if (!ordersToDelete.isEmpty()) {
-			// 삭제 대상을 걸러내고, 삭제될 이미지의 S3 Key를 수집합니다.
-			List<PostImage> retainedImages = currentImages.stream()
-				.filter(image -> {
-					if (ordersToDelete.contains(image.getDisplayOrder())) {
-						s3KeysToDelete.add(image.getS3Key()); // S3 삭제 목록에 추가
-						return false; // 리스트에서 제거 (삭제)
-					}
-					return true; // 리스트에 유지
-				})
-				.collect(Collectors.toCollection(LinkedList::new));
-
-			// 4. 남은 이미지의 순서(DisplayOrder) 재정렬
-			AtomicInteger order = new AtomicInteger(0);
-			retainedImages.forEach(image -> image.setDisplayOrder(order.getAndIncrement()));
-
-			// 엔티티의 이미지 리스트를 재설정하여 영속성 컨텍스트를 업데이트하고, 고아 객체 삭제를 유도
-			post.setImages(retainedImages);
-		}
-
-		// 5. 추가하는 이미지 업로드 및 리스트에 추가
-		List<PostImage> newlyUploadedImages = uploadImage(post, request.file());
-		if (!CollectionUtils.isEmpty(newlyUploadedImages)) {
-			// 기존 리스트에 새 이미지를 추가합니다. (순서는 uploadImage 내부에서 이어서 할당됨)
-			// post.getImages()는 DB에서 불러온 이미지이거나 3번에서 retainedImages로 교체된 이미지입니다.
-			if (post.getImages() == null) {
-				post.setImages(new LinkedList<>());
-			}
-			post.getImages().addAll(newlyUploadedImages);
-		}
-
-		// 6. DB 저장 (Dirty Checking으로 변경 사항 반영)
 		Post saved = repository.save(post);
-
-		// 7. S3 이미지 삭제 (비동기 처리 고려, 현재는 동기적으로 Feign 호출)
-		// 이미 DB 트랜잭션이 커밋되기 전에 삭제 요청이 먼저 실패하면 문제가 될 수 있으나,
-		// 현재는 간단한 구현을 위해 트랜잭션 내에서 동기적으로 처리합니다.
-		s3KeysToDelete.forEach(this::deleteImage);
 
 		return saved.getId();
 	}
@@ -259,44 +198,6 @@ public class PostServiceImpl implements PostService {
 		}
 	}
 
-
-	private List<PostImage> createPostImages(Post post, List<String> imageUrls) {
-		if (CollectionUtils.isEmpty(imageUrls)) {
-			return Collections.emptyList();
-		}
-
-		// post.getImages()가 null이 아닌 경우를 가정하고 (Post 엔티티 초기화 시 Linked/ArrayList로 초기화 추천),
-		// 만약 null이라면 빈 리스트를 반환하거나 초기화합니다.
-		List<PostImage> postImages = post.getImages() != null ? post.getImages() : new LinkedList<>();
-
-		// 기존 이미지 개수(순서의 시작점)로 AtomicInteger 초기화
-		AtomicInteger order = new AtomicInteger(postImages.size());
-
-		List<PostImage> newPostImages = new LinkedList<>();
-
-		imageUrls.forEach(imageUrl -> {
-			// URL에서 S3 키 추출 (https://bucket.s3.region.amazonaws.com/key 형태에서 key 부분만)
-			String s3Key = extractS3KeyFromUrl(imageUrl);
-			newPostImages.add(PostImage.builder()
-				.s3Key(s3Key)
-				// postImages.size()부터 순서 할당 시작
-				.displayOrder(order.getAndIncrement())
-				.build());
-		});
-
-		// 새로 생성된 이미지 리스트만 반환하여 호출 측(save)에서 기존 postImages에 추가하도록 유도
-		return newPostImages;
-	}
-
-	private String extractS3KeyFromUrl(String imageUrl) {
-		try {
-			// URL에서 S3 키 추출
-			return imageUrl.substring(imageUrl.indexOf(".com/") + 5);
-		} catch (Exception e) {
-			log.warn("Failed to extract S3 key from URL: {}", imageUrl, e);
-			return imageUrl; // 실패 시 원본 URL 반환
-		}
-	}
 
 	private List<PostImage> uploadImage(Post post, List<MultipartFile> images) {
 		if (CollectionUtils.isEmpty(images)) {
