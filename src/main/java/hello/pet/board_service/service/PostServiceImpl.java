@@ -23,7 +23,9 @@ import hello.pet.board_service.entity.PostImage;
 import hello.pet.board_service.infrastructure.exception.HelloPetException;
 import hello.pet.board_service.infrastructure.exception.HelloPetExceptionCode;
 import hello.pet.board_service.infrastructure.feign.client.ImageServiceClient;
+import hello.pet.board_service.infrastructure.feign.client.UserServiceClient;
 import hello.pet.board_service.infrastructure.feign.dto.response.ImageUploadResponse;
+import hello.pet.board_service.infrastructure.feign.dto.response.UserDetailResponse;
 import hello.pet.board_service.repository.PostRepository;
 import hello.pet.board_service.web.dto.request.PostCreateRequest;
 import hello.pet.board_service.web.dto.request.PostEditRequest;
@@ -39,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PostServiceImpl implements PostService {
 	private final PostRepository repository;
 	private final ImageServiceClient imageServiceClient;
+	private final UserServiceClient userServiceClient;
 
 	@Override
 	@Transactional
@@ -85,7 +88,7 @@ public class PostServiceImpl implements PostService {
 			request.getPageBase(), request.size(), sort
 		);
 
-		log.info("로그인을 한 상태입니다. {}", currentUserId);
+		log.info("게시글 조회 - currentUserId: {}", currentUserId);
 
 		Page<Post> all;
 		if (request.userId() != null) {
@@ -95,19 +98,26 @@ public class PostServiceImpl implements PostService {
 			// 전체 게시글 조회
 			all = repository.findAll(pageable);
 		}
-		return PostResponse.from(all, currentUserId);
+
+		// 각 게시글의 사용자 정보를 가져와서 PostResponse 생성
+		return all.map(post -> {
+			UserDetailResponse userDetail = getUserDetail(post.getUserId());
+			return PostResponse.from(post, currentUserId, userDetail);
+		});
 	}
 
 	@Override
 	public PostResponse findOne(String id) {
 		Post post = findPostById(id);
-		return PostResponse.from(post);
+		UserDetailResponse userDetail = getUserDetail(post.getUserId());
+		return PostResponse.from(post, null, userDetail);
 	}
 
 	@Override
 	public PostResponse findOne(String id, Long currentUserId) {
 		Post post = findPostById(id);
-		return PostResponse.from(post, currentUserId);
+		UserDetailResponse userDetail = getUserDetail(post.getUserId());
+		return PostResponse.from(post, currentUserId, userDetail);
 	}
 
 	@Override
@@ -237,6 +247,16 @@ public class PostServiceImpl implements PostService {
 			.orElseThrow(
 				() -> new HelloPetException(HelloPetExceptionCode.NOT_FOUND_POST_BY_ID)
 			);
+	}
+
+	private UserDetailResponse getUserDetail(Long userId) {
+		try {
+			ResponseEntity<UserDetailResponse> response = userServiceClient.getUserDetail(userId);
+			return response.getBody();
+		} catch (Exception e) {
+			log.warn("Failed to fetch user detail for userId: {}, error: {}", userId, e.getMessage());
+			return null; // 사용자 정보 조회 실패 시 null 반환
+		}
 	}
 
 
