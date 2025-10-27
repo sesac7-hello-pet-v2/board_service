@@ -22,6 +22,7 @@ public interface ImageServiceClient {
 	ResponseEntity<ImageUploadResponse> uploadImage(
 		@RequestPart("userId") Long userId,
 		@RequestPart("postId") String postId,
+		@RequestPart("type") String type,
 		@RequestPart("file") MultipartFile file
 	);
 

@@ -311,8 +311,8 @@ public class PostServiceImpl implements PostService {
 		ImageUploadResponse body;
 
 		try {
-			// Feign 클라이언트 호출
-			ResponseEntity<ImageUploadResponse> response = imageServiceClient.uploadImage(userId, postId, file);
+			// Feign 클라이언트 호출 - feed 타입으로 고정
+			ResponseEntity<ImageUploadResponse> response = imageServiceClient.uploadImage(userId, postId, "feed", file);
 			body = response.getBody(); // 응답 본문을 추출
 			log.info("이미지 업로드 Feign 호출 성공 - fileName: {}, response status: {}",
 				file.getOriginalFilename(), response.getStatusCode());
