@@ -30,7 +30,7 @@ public class CommentControllerImpl implements CommentController {
 
 	@Override
 	@PostMapping
-	public ResponseEntity<CommentResponse> createComment(
+	public ResponseEntity<Void> createComment(
 		@PathVariable String postId,
 		@RequestHeader("X-User-Id") Long userId,
 		@Valid @RequestBody CommentCreateRequest request
@@ -38,8 +38,8 @@ public class CommentControllerImpl implements CommentController {
 		// postId를 request에 설정 (URL에서 가져온 값 사용)
 		CommentCreateRequest updatedRequest = new CommentCreateRequest(postId, request.content());
 
-		CommentResponse response = commentService.createComment(userId, updatedRequest);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+		commentService.createComment(userId, updatedRequest);
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 	@Override

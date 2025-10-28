@@ -36,7 +36,7 @@ public class CommentServiceImpl implements CommentService {
 
 	@Override
 	@Transactional
-	public CommentResponse createComment(Long userId, CommentCreateRequest request) {
+	public void createComment(Long userId, CommentCreateRequest request) {
 		// 게시글 존재 여부 확인
 		Post post = postRepository.findById(request.postId())
 			.orElseThrow(() -> new HelloPetException(HelloPetExceptionCode.POST_NOT_FOUND));
@@ -48,25 +48,11 @@ public class CommentServiceImpl implements CommentService {
 			.content(request.content())
 			.build();
 
-		Comment savedComment = commentRepository.save(comment);
+		commentRepository.save(comment);
 
 		// 게시글의 댓글 수 증가
 		post.setCommentCount(post.getCommentCount() + 1);
 		postRepository.save(post);
-
-		// 사용자 정보 조회
-		UserDetailResponse userDetail = userServiceClient.getUserDetail(userId).getBody();
-		PostUserResponse userResponse = PostUserResponse.from(userId, userDetail);
-
-		return new CommentResponse(
-			savedComment.getId(),
-			savedComment.getPostId(),
-			userResponse,
-			savedComment.getContent(),
-			savedComment.getCreatedAt(),
-			savedComment.getUpdatedAt(),
-			true
-		);
 	}
 
 	@Override

@@ -28,7 +28,7 @@ public interface CommentController {
 		HelloPetExceptionCode.POST_NOT_FOUND,
 		HelloPetExceptionCode.INTERNAL_SERVER_ERROR
 	})
-	ResponseEntity<CommentResponse> createComment(
+	ResponseEntity<Void> createComment(
 		@Parameter(description = "게시글 ID", required = true)
 		@PathVariable String postId,
 

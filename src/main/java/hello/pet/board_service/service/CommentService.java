@@ -13,9 +13,8 @@ public interface CommentService {
 	 * 댓글 작성
 	 * @param userId 작성자 ID
 	 * @param request 댓글 작성 요청
-	 * @return 작성된 댓글 응답
 	 */
-	CommentResponse createComment(Long userId, CommentCreateRequest request);
+	void createComment(Long userId, CommentCreateRequest request);
 
 	/**
 	 * 게시글별 댓글 조회 (페이징)
