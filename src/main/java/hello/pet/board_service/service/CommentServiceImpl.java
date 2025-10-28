@@ -61,11 +61,11 @@ public class CommentServiceImpl implements CommentService {
 		postRepository.findById(postId)
 			.orElseThrow(() -> new HelloPetException(HelloPetExceptionCode.POST_NOT_FOUND));
 
-		// 페이징 설정 (작성일시 오름차순)
+		// 페이징 설정 (작성일시 내림차순 - 최신순)
 		Pageable pageable = PageRequest.of(
 			request.getPageForRepository(),
 			request.size(),
-			Sort.by(Sort.Direction.ASC, "createdAt")
+			Sort.by(Sort.Direction.DESC, "createdAt")
 		);
 
 		Page<Comment> comments = commentRepository.findByPostIdAndNotDeleted(postId, pageable);
