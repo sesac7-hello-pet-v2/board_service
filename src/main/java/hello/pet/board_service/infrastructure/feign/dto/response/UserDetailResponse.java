@@ -1,6 +1,7 @@
 package hello.pet.board_service.infrastructure.feign.dto.response;
 
 public record UserDetailResponse(
+	Long id,
 	String email,
 	String nickname,
 	String username,

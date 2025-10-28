@@ -39,6 +39,7 @@ public class PostServiceImpl implements PostService {
 	private final PostRepository repository;
 	private final ImageServiceClient imageServiceClient;
 	private final UserServiceClient userServiceClient;
+	private final CommentService commentService;
 
 	@Override
 	@Transactional
@@ -151,7 +152,14 @@ public class PostServiceImpl implements PostService {
 		if (!post.getUserId().equals(userId)) {
 			throw new HelloPetException(HelloPetExceptionCode.FORBIDDEN);
 		}
+
+		// 게시글에 연결된 모든 댓글 삭제
+		commentService.deleteCommentsByPostId(id);
+
+		// 게시글의 이미지들 삭제
 		post.getImages().forEach(image -> deleteImage(image.getS3Key()));
+
+		// 게시글 삭제
 		repository.delete(post);
 	}
 
