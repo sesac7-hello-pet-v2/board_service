@@ -1,10 +1,6 @@
 package hello.pet.board_service.entity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -25,15 +21,20 @@ import lombok.Setter;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Document(collection = "posts")
+@Document(collection = "comments")
 @CompoundIndexes({
-	// userId로 먼저 필터링하고, createdAt으로 정렬할 때 효율적
+	// postId로 먼저 필터링하고, createdAt으로 정렬할 때 효율적
+	@CompoundIndex(name = "post_created_idx", def = "{'postId': 1, 'createdAt': 1}", unique = false),
+	// userId로 사용자의 댓글을 조회할 때 효율적
 	@CompoundIndex(name = "user_created_idx", def = "{'userId': 1, 'createdAt': -1}", unique = false)
 })
 @Builder
-public class Post {
+public class Comment {
 	@Id
 	private String id;
+
+	@Indexed(direction = IndexDirection.ASCENDING)
+	private String postId;
 
 	@Indexed(direction = IndexDirection.ASCENDING)
 	private Long userId;
@@ -41,24 +42,14 @@ public class Post {
 	@Setter
 	private String content;
 
-	@Setter
-	@Builder.Default
-	private List<PostImage> images = new ArrayList<>();
-
 	@CreatedDate
 	private LocalDateTime createdAt;
 
 	@LastModifiedDate
 	private LocalDateTime updatedAt;
 
-	@Builder.Default
-	private Set<Long> likedUserIds = new HashSet<>();
-
+	// 댓글이 삭제되었는지 여부 (soft delete)
 	@Builder.Default
 	@Setter
-	private int likeCount = 0;
-
-	@Builder.Default
-	@Setter
-	private int commentCount = 0;
+	private boolean deleted = false;
 }

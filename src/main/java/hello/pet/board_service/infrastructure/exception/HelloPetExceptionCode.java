@@ -41,6 +41,30 @@ public enum HelloPetExceptionCode {
 		HttpStatus.FORBIDDEN,
 		"ACCESS_FORBIDDEN",
 		"해당 작업에 대한 권한이 없습니다."
+	),
+	@ExplainError("게시글을 찾을 수 없을 때 발생하는 에러입니다.")
+	POST_NOT_FOUND(
+		HttpStatus.NOT_FOUND,
+		"POST_NOT_FOUND",
+		"게시글을 찾을 수 없습니다."
+	),
+	@ExplainError("댓글을 찾을 수 없을 때 발생하는 에러입니다.")
+	COMMENT_NOT_FOUND(
+		HttpStatus.NOT_FOUND,
+		"COMMENT_NOT_FOUND",
+		"댓글을 찾을 수 없습니다."
+	),
+	@ExplainError("댓글 수정 권한이 없을 때 발생하는 에러입니다.")
+	COMMENT_UPDATE_FORBIDDEN(
+		HttpStatus.FORBIDDEN,
+		"COMMENT_UPDATE_FORBIDDEN",
+		"댓글을 수정할 권한이 없습니다."
+	),
+	@ExplainError("댓글 삭제 권한이 없을 때 발생하는 에러입니다.")
+	COMMENT_DELETE_FORBIDDEN(
+		HttpStatus.FORBIDDEN,
+		"COMMENT_DELETE_FORBIDDEN",
+		"댓글을 삭제할 권한이 없습니다."
 	)
 	;
 

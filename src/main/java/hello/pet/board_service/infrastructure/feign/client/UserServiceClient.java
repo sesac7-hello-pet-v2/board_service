@@ -22,4 +22,5 @@ public interface UserServiceClient {
 		produces = MediaType.APPLICATION_JSON_VALUE
 	)
 	ResponseEntity<UserDetailResponse> getUserDetail(@PathVariable("userId") Long userId);
+
 }

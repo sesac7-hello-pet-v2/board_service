@@ -15,6 +15,7 @@ public record PostResponse(
 	List<String> imageUrls,
 	LocalDateTime postedAt,
 	int likeCount,
+	int commentCount,
 	boolean isLiked
 ) {
 	public static PostResponse from(Post post) {
@@ -25,6 +26,7 @@ public record PostResponse(
 			mapToImageUrls(post),
 			post.getCreatedAt(),
 			post.getLikeCount(),
+			post.getCommentCount(),
 			false // 기본값, 실제 조회 시 현재 사용자 기준으로 설정
 		);
 	}
@@ -41,6 +43,7 @@ public record PostResponse(
 			mapToImageUrls(post),
 			post.getCreatedAt(),
 			post.getLikeCount(),
+			post.getCommentCount(),
 			isLiked
 		);
 	}
@@ -66,6 +69,7 @@ public record PostResponse(
 			mapToImageUrls(post),
 			post.getCreatedAt(),
 			post.getLikeCount(),
+			post.getCommentCount(),
 			isLiked
 		);
 	}
